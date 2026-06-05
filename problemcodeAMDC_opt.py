@@ -321,106 +321,172 @@ def hyperterm(l1_array, k, m, r, theta):
 
 
 # ==========================================
-# Main solver — optimized triple loop
+# Main solver — fully optimized
 # ==========================================
 def problemcodeAMDC(N, d_val, K, a, b):
-    # Ensure shared caches are ready
+    """
+    Solve the rigid-elliptic-disc BVP.
+
+    Optimizations over the previous version:
+      • c matrix  : one BLAS dgemm (P4_mat @ WPP_mat.T) replaces an
+                    O(size²) Python loop of dot products.
+      • A matrix  : each column built by evaluating alform2/3 on the full
+                    R_flat array at once; ht_mat.T @ gl replaces the outer
+                    l-loop entirely.
+      • Final sum : one matvec OP_mat.T @ X_sol replaces the (k,m) loop.
+    """
     _ensure_intgral_cache()
     _ensure_dic_cache()
 
     n     = np.arange(N + 1)
     size  = (N + 1)**2
 
-    A = np.zeros((size, size), dtype=np.complex128)
-    c = np.zeros((size, size), dtype=np.complex128)
-
     theta = (2 * n + 1) * np.pi / (2 * N + 2)
     r     = np.cos(theta / 2)
 
     R_grid, THETA_grid = np.meshgrid(r, theta, indexing='xy')
-    R_flat     = R_grid.flatten(order='F')
+    R_flat     = R_grid.flatten(order='F')    # (size,)
     THETA_flat = THETA_grid.flatten(order='F')
+    denom_flat = np.sqrt(1 - R_flat**2)       # (size,) — reused each column
 
     # ----------------------------------------------------------------
-    # Pre-compute p4_T for every collocation point l — this is the
-    # expensive check() call inside doubleintC and is independent of (k,m).
+    # Phase 1: stack p4_T for all collocation points into P4_mat
+    #   P4_mat[l, :] = p4_T_list[l].ravel()    shape (size, Q²)
     # ----------------------------------------------------------------
     print("Pre-computing check() for all collocation points …")
-    p4_T_list = []
-    for l in range(size):
-        p4_T_list.append(
-            doubleintC_precomputed(R_flat[l], THETA_flat[l], d_val, K, a, b)
-        )
+    p4_T_list = [
+        doubleintC_precomputed(R_flat[l], THETA_flat[l], d_val, K, a, b)
+        for l in range(size)
+    ]
+    P4_mat = np.vstack([p.ravel() for p in p4_T_list])  # (size, Q²), complex128
 
     # ----------------------------------------------------------------
-    # Pre-compute getgl for every (k,m) — independent of l.
+    # Phase 2: build gl_cache, WPP_mat and OP_mat for all (k,m) pairs
+    #   WPP_mat[p, :] = (_DIC_W * outer(p1,p2)).ravel()  → needed for c
+    #   OP_mat [p, :] = outer(p1,p2).ravel()             → needed for final sum
     # ----------------------------------------------------------------
-    print("Pre-computing getgl for all (k,m) pairs …")
-    gl_cache  = {}   # (k,m) -> gl array
-    for k in range(N + 1):
-        for m in range(N + 1):
-            l_arr = np.arange(-k, k + 1)
-            gl_cache[(k, m)] = getgl(l_arr, a, b)
-
-    # ----------------------------------------------------------------
-    # Pre-compute alform(k,m, x1)*x1 and cos(m*x2) for final summation
-    # ----------------------------------------------------------------
-    print("Pre-computing alform for final summation …")
+    print("Pre-computing getgl and alform bases …")
+    km_pairs        = [(k, m) for k in range(N + 1) for m in range(N + 1)]
+    gl_cache        = {}
     alform_x1_cache = {}
     cosm_x2_cache   = {}
-    for k in range(N + 1):
-        for m in range(N + 1):
-            alform_x1_cache[(k, m)] = alform(k, m, _DIC_X1) * _DIC_X1
-            cosm_x2_cache[m]        = np.cos(m * _DIC_X2)
+    WPP_rows        = []
+    OP_rows         = []
+
+    for k, m in km_pairs:
+        gl_cache[(k, m)] = getgl(np.arange(-k, k + 1), a, b)
+
+        p1 = alform(k, m, _DIC_X1) * _DIC_X1
+        p2 = np.cos(m * _DIC_X2)
+        alform_x1_cache[(k, m)] = p1
+        cosm_x2_cache[m]        = p2
+
+        op = np.outer(p1, p2)
+        WPP_rows.append((_DIC_W * op).ravel())
+        OP_rows.append(op.ravel())
+
+    # Both are real; NumPy auto-promotes when multiplied with complex arrays
+    WPP_mat = np.array(WPP_rows, dtype=np.float64)  # (size, Q²)
+    OP_mat  = np.array(OP_rows,  dtype=np.float64)  # (size, Q²)
 
     # ----------------------------------------------------------------
-    # Main fill loop — O(size * (N+1)^2) but inner work is cheap
+    # Phase 3: c matrix — one matrix multiply
+    #   c[l, p] = (a·b) · P4_mat[l,:] · WPP_mat[p,:]
+    #   c = (a·b) · P4_mat @ WPP_mat.T             (size, size)
     # ----------------------------------------------------------------
-    print("Filling A and c matrices …")
-    for l in range(size):
-        p4_T = p4_T_list[l]
-        p = 0
-        for k in range(N + 1):
-            for m in range(N + 1):
-                l_arr = np.arange(-k, k + 1)
-                gl    = gl_cache[(k, m)]
+    print("Computing c matrix via matrix multiply …")
+    c = (a * b) * (P4_mat @ WPP_mat.T)   # (size, size), complex128
 
-                # hyperterm at single point (r, theta)
-                ht = hyperterm(l_arr, k, m, R_flat[l], THETA_flat[l])
-                A[l, p] = np.dot(ht, gl)
+    # ----------------------------------------------------------------
+    # Phase 4: A matrix — vectorized over ALL collocation points per column
+    #
+    #  For column col_idx ↔ (k, m):
+    #    l_arr   = 2·arange(-k, k+1)                     shape (L,) L=2k+1
+    #    Clmk, Elkm                                       shape (L,)
+    #    term3_mat[i,l] = alform3(k,m,l_arr[i], R_flat)  shape (L, size)
+    #    term2_mat[i,l] = alform2(k,m,l_arr[i], R_flat)  shape (L, size)
+    #    phase3[i,l] = exp(1j·(l_arr[i]+m)·THETA[l])     shape (L, size)
+    #    phase2[i,l] = exp(1j·(l_arr[i]-m)·THETA[l])     shape (L, size)
+    #    ht_mat = (Clmk·term3·phase3 + Elkm·term2·phase2) / (2·denom)
+    #    A[:, col_idx] = ht_mat.T @ gl             (size, L) @ (L,) → (size,)
+    # ----------------------------------------------------------------
+    print("Computing A matrix (vectorized over collocation points) …")
+    A = np.zeros((size, size), dtype=np.complex128)
 
-                # doubleintC with pre-computed p4_T
-                p1 = alform_x1_cache[(k, m)]
-                p2 = cosm_x2_cache[m]
-                pp = np.outer(p1, p2)
-                c[l, p] = a * b * np.sum(_DIC_W * pp * p4_T)
+    for col_idx, (k, m) in enumerate(km_pairs):
+        l1_arr = np.arange(-k, k + 1, dtype=np.float64)
+        l_arr  = (2 * l1_arr).astype(int)   # (L,) even integers
+        gl     = gl_cache[(k, m)]            # (L,)
 
-                p += 1
+        # --- vectorized coefficients (over l_arr) ---
+        g_km    = gamma(k + 1.5)
+        g_km1   = gamma(k + m + 1)
+        f_2k1   = factorial(2*k + 1,        exact=False)
+        f_2k2m1 = factorial(2*k + 2*m + 1,  exact=False)
 
-    C = A + c
-    f = 4 * np.pi * np.ones(size, dtype=np.complex128)
+        sign_C = (-1.0)**(l_arr + 2*m)
+        Clmk   = sign_C * (
+            (np.pi * 2.0**(l_arr + 2) / (l_arr**2 - 1))
+            * (factorial(2*k - l_arr + 1,           exact=False)
+               / factorial(2*k + 2*m + l_arr + 1,  exact=False))
+            * (f_2k2m1 / f_2k1)
+            * (g_km / g_km1)
+            * (gamma(k + l_arr/2 + m + 1.5) / gamma(k - l_arr/2 + 1))
+        )   # (L,)
 
+        sign_E = (-1.0)**(l_arr + m)
+        Elkm   = sign_E * (
+            (np.pi * 2.0**(l_arr - 2*m + 2) / (l_arr**2 - 1))
+            * (g_km / g_km1)
+            * (f_2k2m1 / f_2k1)
+            * (gamma(k + l_arr/2 + 1.5) / gamma(m + k - l_arr/2 + 1))
+            * (factorial(2*m + 2*k - l_arr + 1, exact=False)
+               / factorial(l_arr + 2*k + 1,     exact=False))
+        )   # (L,)
+
+        # --- alform2/3 evaluated at ALL collocation points at once ---
+        # Each lambdified function is sympy-cached; applied to R_flat (size,)
+        term2_mat = np.array([
+            _eval_lambdify(_get_alform2_func(k, m, int(lv)), R_flat)
+            for lv in l_arr
+        ], dtype=np.float64)   # (L, size)
+
+        term3_mat = np.array([
+            _eval_lambdify(_get_alform3_func(k, m, int(lv)), R_flat)
+            for lv in l_arr
+        ], dtype=np.float64)   # (L, size)
+
+        # --- phase factors ---
+        phase3 = np.exp(1j * (l_arr[:, None] + m) * THETA_flat[None, :])  # (L, size)
+        phase2 = np.exp(1j * (l_arr[:, None] - m) * THETA_flat[None, :])  # (L, size)
+
+        # --- build ht_mat and fill column ---
+        ht_mat = (
+            Clmk[:, None] * term3_mat * phase3
+            + Elkm[:, None] * term2_mat * phase2
+        ) / (2.0 * denom_flat[None, :])   # (L, size)
+
+        A[:, col_idx] = ht_mat.T @ gl     # (size, L) @ (L,) → (size,)
+
+    # ----------------------------------------------------------------
+    # Phase 5: solve
+    # ----------------------------------------------------------------
+    C     = A + c
+    f_vec = 4 * np.pi * np.ones(size, dtype=np.complex128)
     print("Solving linear system …")
-    X_sol = np.linalg.solve(C, f)
+    X_sol = np.linalg.solve(C, f_vec)
 
     # ----------------------------------------------------------------
-    # Final summation — vectorised outer-product accumulation
+    # Phase 6: final sum — one matvec instead of a (k,m) loop
+    #   sum1[i,j] = Σ_p X_sol[p] · OP_mat[p, flat(i,j)]
+    #             = reshape(OP_mat.T @ X_sol, (Q, Q))
     # ----------------------------------------------------------------
-    x1, w1 = lgwt(_QUAD_N, 0, 1)
-    x2, w2 = lgwt(_QUAD_N, 0, 2 * np.pi)
+    sum1 = (OP_mat.T @ X_sol).reshape((_QUAD_N, _QUAD_N))
 
-    q_idx = 0
-    sum1  = np.zeros((_QUAD_N, _QUAD_N), dtype=np.complex128)
-
-    for k in range(N + 1):
-        for m in range(N + 1):
-            p1 = alform_x1_cache[(k, m)]
-            p2 = cosm_x2_cache[m]
-            sum1 += X_sol[q_idx] * np.outer(p1, p2)
-            q_idx += 1
-
-    w      = np.outer(w1, w2)
-    final  = -np.sum(w * sum1) / np.pi   # a*b cancels
+    _, w1 = lgwt(_QUAD_N, 0, 1)
+    _, w2 = lgwt(_QUAD_N, 0, 2 * np.pi)
+    w     = np.outer(w1, w2)
+    final = -np.sum(w * sum1) / np.pi   # a·b cancels
 
     return final
 
