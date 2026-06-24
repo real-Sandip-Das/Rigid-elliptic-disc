@@ -1,6 +1,6 @@
 import numpy as np
 from . import problemcodeAMDC_opt as opt
-import csv
+import pandas as pd
 import time
 import os
 
@@ -86,27 +86,28 @@ def main():
     print(f"Phi evaluation completed in {time.time()-t0:.2f}s")
     
     print("Writing to CSV...")
-    with open(filename, 'w', newline='') as f:
-        writer = csv.writer(f)
-        writer.writerow(header)
-        
-        for i_a, a_b in enumerate(a_vals):
-            for i_d, d_b in enumerate(d_vals):
-                for i_K, K in enumerate(K_vals):
-                    final = final_sweep[i_a, i_d, i_K]
-                    
-                    added_mass = np.real(np.pi * final * a_b)
-                    damping = np.imag(np.pi * final * a_b)
-                    
-                    phi_vals = phi_sweep[i_a, i_d, i_K]
-                    
-                    row = [a_b, d_b, K]
-                    for phi in phi_vals:
-                        row.append(phi.real)
-                        row.append(phi.imag)
-                    row.extend([added_mass, damping])
-                    
-                    writer.writerow(row)
+    
+    rows = []
+    for i_a, a_b in enumerate(a_vals):
+        for i_d, d_b in enumerate(d_vals):
+            for i_K, K in enumerate(K_vals):
+                final = final_sweep[i_a, i_d, i_K]
+                
+                added_mass = np.real(np.pi * final * a_b)
+                damping = np.imag(np.pi * final * a_b)
+                
+                phi_vals = phi_sweep[i_a, i_d, i_K]
+                
+                row = [a_b, d_b, K]
+                for phi in phi_vals:
+                    row.append(phi.real)
+                    row.append(phi.imag)
+                row.extend([added_mass, damping])
+                
+                rows.append(row)
+                
+    df = pd.DataFrame(rows, columns=header)
+    df.to_csv(filename, index=False)
                     
     print(f"Dataset successfully written to {filename}")
                     
