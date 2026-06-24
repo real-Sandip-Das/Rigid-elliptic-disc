@@ -1,5 +1,5 @@
 import numpy as np
-import problemcodeAMDC_opt as opt
+from . import problemcodeAMDC_opt as opt
 import csv
 import time
 import os

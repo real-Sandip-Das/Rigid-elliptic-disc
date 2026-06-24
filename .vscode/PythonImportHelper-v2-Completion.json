@@ -1,0 +1,940 @@
+[
+    {
+        "label": "runpy",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "runpy",
+        "description": "runpy",
+        "detail": "runpy",
+        "documentation": {}
+    },
+    {
+        "label": "annotations",
+        "importPath": "__future__",
+        "description": "__future__",
+        "isExtraImport": true,
+        "detail": "__future__",
+        "documentation": {}
+    },
+    {
+        "label": "os",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "os",
+        "description": "os",
+        "detail": "os",
+        "documentation": {}
+    },
+    {
+        "label": "site",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "site",
+        "description": "site",
+        "detail": "site",
+        "documentation": {}
+    },
+    {
+        "label": "sys",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "sys",
+        "description": "sys",
+        "detail": "sys",
+        "documentation": {}
+    },
+    {
+        "label": "sys,",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "sys.",
+        "description": "sys.",
+        "detail": "sys.",
+        "documentation": {}
+    },
+    {
+        "label": "numpy",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "numpy",
+        "description": "numpy",
+        "detail": "numpy",
+        "documentation": {}
+    },
+    {
+        "label": "problemcodeAMDC_opt",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "problemcodeAMDC_opt",
+        "description": "problemcodeAMDC_opt",
+        "detail": "problemcodeAMDC_opt",
+        "documentation": {}
+    },
+    {
+        "label": "k0",
+        "importPath": "scipy.special",
+        "description": "scipy.special",
+        "isExtraImport": true,
+        "detail": "scipy.special",
+        "documentation": {}
+    },
+    {
+        "label": "k0",
+        "importPath": "scipy.special",
+        "description": "scipy.special",
+        "isExtraImport": true,
+        "detail": "scipy.special",
+        "documentation": {}
+    },
+    {
+        "label": "j0",
+        "importPath": "scipy.special",
+        "description": "scipy.special",
+        "isExtraImport": true,
+        "detail": "scipy.special",
+        "documentation": {}
+    },
+    {
+        "label": "y0",
+        "importPath": "scipy.special",
+        "description": "scipy.special",
+        "isExtraImport": true,
+        "detail": "scipy.special",
+        "documentation": {}
+    },
+    {
+        "label": "hankel1",
+        "importPath": "scipy.special",
+        "description": "scipy.special",
+        "isExtraImport": true,
+        "detail": "scipy.special",
+        "documentation": {}
+    },
+    {
+        "label": "kn",
+        "importPath": "scipy.special",
+        "description": "scipy.special",
+        "isExtraImport": true,
+        "detail": "scipy.special",
+        "documentation": {}
+    },
+    {
+        "label": "gamma",
+        "importPath": "scipy.special",
+        "description": "scipy.special",
+        "isExtraImport": true,
+        "detail": "scipy.special",
+        "documentation": {}
+    },
+    {
+        "label": "factorial",
+        "importPath": "scipy.special",
+        "description": "scipy.special",
+        "isExtraImport": true,
+        "detail": "scipy.special",
+        "documentation": {}
+    },
+    {
+        "label": "k0",
+        "importPath": "scipy.special",
+        "description": "scipy.special",
+        "isExtraImport": true,
+        "detail": "scipy.special",
+        "documentation": {}
+    },
+    {
+        "label": "j0",
+        "importPath": "scipy.special",
+        "description": "scipy.special",
+        "isExtraImport": true,
+        "detail": "scipy.special",
+        "documentation": {}
+    },
+    {
+        "label": "y0",
+        "importPath": "scipy.special",
+        "description": "scipy.special",
+        "isExtraImport": true,
+        "detail": "scipy.special",
+        "documentation": {}
+    },
+    {
+        "label": "gamma",
+        "importPath": "scipy.special",
+        "description": "scipy.special",
+        "isExtraImport": true,
+        "detail": "scipy.special",
+        "documentation": {}
+    },
+    {
+        "label": "gammaln",
+        "importPath": "scipy.special",
+        "description": "scipy.special",
+        "isExtraImport": true,
+        "detail": "scipy.special",
+        "documentation": {}
+    },
+    {
+        "label": "factorial",
+        "importPath": "scipy.special",
+        "description": "scipy.special",
+        "isExtraImport": true,
+        "detail": "scipy.special",
+        "documentation": {}
+    },
+    {
+        "label": "csv",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "csv",
+        "description": "csv",
+        "detail": "csv",
+        "documentation": {}
+    },
+    {
+        "label": "time",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "time",
+        "description": "time",
+        "detail": "time",
+        "documentation": {}
+    },
+    {
+        "label": "sympy",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "sympy",
+        "description": "sympy",
+        "detail": "sympy",
+        "documentation": {}
+    },
+    {
+        "label": "functools",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "functools",
+        "description": "functools",
+        "detail": "functools",
+        "documentation": {}
+    },
+    {
+        "label": "ThreadPoolExecutor",
+        "importPath": "concurrent.futures",
+        "description": "concurrent.futures",
+        "isExtraImport": true,
+        "detail": "concurrent.futures",
+        "documentation": {}
+    },
+    {
+        "label": "dataset_generation.problemcodeAMDC_opt",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "dataset_generation.problemcodeAMDC_opt",
+        "description": "dataset_generation.problemcodeAMDC_opt",
+        "detail": "dataset_generation.problemcodeAMDC_opt",
+        "documentation": {}
+    },
+    {
+        "label": "bin_dir",
+        "kind": 5,
+        "importPath": "dataset_generation..venv.bin.activate_this",
+        "description": "dataset_generation..venv.bin.activate_this",
+        "peekOfCode": "bin_dir = os.path.dirname(abs_file)\nbase = bin_dir[: -len(\"bin\") - 1]  # strip away the bin part from the __file__, plus the path separator\n# prepend bin to PATH (this file is inside the bin directory)\nos.environ[\"PATH\"] = os.pathsep.join([bin_dir, *os.environ.get(\"PATH\", \"\").split(os.pathsep)])\nos.environ[\"VIRTUAL_ENV\"] = base  # virtual env is right above bin directory\nos.environ[\"VIRTUAL_ENV_PROMPT\"] = \"dataset-generation\" or os.path.basename(base)  # noqa: SIM222\n# add the virtual environments libraries to the host python import mechanism\nprev_length = len(sys.path)\nfor lib in \"../lib/python3.12/site-packages\".split(os.pathsep):\n    path = os.path.realpath(os.path.join(bin_dir, lib))",
+        "detail": "dataset_generation..venv.bin.activate_this",
+        "documentation": {}
+    },
+    {
+        "label": "base",
+        "kind": 5,
+        "importPath": "dataset_generation..venv.bin.activate_this",
+        "description": "dataset_generation..venv.bin.activate_this",
+        "peekOfCode": "base = bin_dir[: -len(\"bin\") - 1]  # strip away the bin part from the __file__, plus the path separator\n# prepend bin to PATH (this file is inside the bin directory)\nos.environ[\"PATH\"] = os.pathsep.join([bin_dir, *os.environ.get(\"PATH\", \"\").split(os.pathsep)])\nos.environ[\"VIRTUAL_ENV\"] = base  # virtual env is right above bin directory\nos.environ[\"VIRTUAL_ENV_PROMPT\"] = \"dataset-generation\" or os.path.basename(base)  # noqa: SIM222\n# add the virtual environments libraries to the host python import mechanism\nprev_length = len(sys.path)\nfor lib in \"../lib/python3.12/site-packages\".split(os.pathsep):\n    path = os.path.realpath(os.path.join(bin_dir, lib))\n    site.addsitedir(path)",
+        "detail": "dataset_generation..venv.bin.activate_this",
+        "documentation": {}
+    },
+    {
+        "label": "os.environ[\"PATH\"]",
+        "kind": 5,
+        "importPath": "dataset_generation..venv.bin.activate_this",
+        "description": "dataset_generation..venv.bin.activate_this",
+        "peekOfCode": "os.environ[\"PATH\"] = os.pathsep.join([bin_dir, *os.environ.get(\"PATH\", \"\").split(os.pathsep)])\nos.environ[\"VIRTUAL_ENV\"] = base  # virtual env is right above bin directory\nos.environ[\"VIRTUAL_ENV_PROMPT\"] = \"dataset-generation\" or os.path.basename(base)  # noqa: SIM222\n# add the virtual environments libraries to the host python import mechanism\nprev_length = len(sys.path)\nfor lib in \"../lib/python3.12/site-packages\".split(os.pathsep):\n    path = os.path.realpath(os.path.join(bin_dir, lib))\n    site.addsitedir(path)\nsys.path[:] = sys.path[prev_length:] + sys.path[0:prev_length]\nsys.real_prefix = sys.prefix",
+        "detail": "dataset_generation..venv.bin.activate_this",
+        "documentation": {}
+    },
+    {
+        "label": "os.environ[\"VIRTUAL_ENV\"]",
+        "kind": 5,
+        "importPath": "dataset_generation..venv.bin.activate_this",
+        "description": "dataset_generation..venv.bin.activate_this",
+        "peekOfCode": "os.environ[\"VIRTUAL_ENV\"] = base  # virtual env is right above bin directory\nos.environ[\"VIRTUAL_ENV_PROMPT\"] = \"dataset-generation\" or os.path.basename(base)  # noqa: SIM222\n# add the virtual environments libraries to the host python import mechanism\nprev_length = len(sys.path)\nfor lib in \"../lib/python3.12/site-packages\".split(os.pathsep):\n    path = os.path.realpath(os.path.join(bin_dir, lib))\n    site.addsitedir(path)\nsys.path[:] = sys.path[prev_length:] + sys.path[0:prev_length]\nsys.real_prefix = sys.prefix\nsys.prefix = base",
+        "detail": "dataset_generation..venv.bin.activate_this",
+        "documentation": {}
+    },
+    {
+        "label": "os.environ[\"VIRTUAL_ENV_PROMPT\"]",
+        "kind": 5,
+        "importPath": "dataset_generation..venv.bin.activate_this",
+        "description": "dataset_generation..venv.bin.activate_this",
+        "peekOfCode": "os.environ[\"VIRTUAL_ENV_PROMPT\"] = \"dataset-generation\" or os.path.basename(base)  # noqa: SIM222\n# add the virtual environments libraries to the host python import mechanism\nprev_length = len(sys.path)\nfor lib in \"../lib/python3.12/site-packages\".split(os.pathsep):\n    path = os.path.realpath(os.path.join(bin_dir, lib))\n    site.addsitedir(path)\nsys.path[:] = sys.path[prev_length:] + sys.path[0:prev_length]\nsys.real_prefix = sys.prefix\nsys.prefix = base",
+        "detail": "dataset_generation..venv.bin.activate_this",
+        "documentation": {}
+    },
+    {
+        "label": "prev_length",
+        "kind": 5,
+        "importPath": "dataset_generation..venv.bin.activate_this",
+        "description": "dataset_generation..venv.bin.activate_this",
+        "peekOfCode": "prev_length = len(sys.path)\nfor lib in \"../lib/python3.12/site-packages\".split(os.pathsep):\n    path = os.path.realpath(os.path.join(bin_dir, lib))\n    site.addsitedir(path)\nsys.path[:] = sys.path[prev_length:] + sys.path[0:prev_length]\nsys.real_prefix = sys.prefix\nsys.prefix = base",
+        "detail": "dataset_generation..venv.bin.activate_this",
+        "documentation": {}
+    },
+    {
+        "label": "sys.path[:]",
+        "kind": 5,
+        "importPath": "dataset_generation..venv.bin.activate_this",
+        "description": "dataset_generation..venv.bin.activate_this",
+        "peekOfCode": "sys.path[:] = sys.path[prev_length:] + sys.path[0:prev_length]\nsys.real_prefix = sys.prefix\nsys.prefix = base",
+        "detail": "dataset_generation..venv.bin.activate_this",
+        "documentation": {}
+    },
+    {
+        "label": "sys.real_prefix",
+        "kind": 5,
+        "importPath": "dataset_generation..venv.bin.activate_this",
+        "description": "dataset_generation..venv.bin.activate_this",
+        "peekOfCode": "sys.real_prefix = sys.prefix\nsys.prefix = base",
+        "detail": "dataset_generation..venv.bin.activate_this",
+        "documentation": {}
+    },
+    {
+        "label": "sys.prefix",
+        "kind": 5,
+        "importPath": "dataset_generation..venv.bin.activate_this",
+        "description": "dataset_generation..venv.bin.activate_this",
+        "peekOfCode": "sys.prefix = base",
+        "detail": "dataset_generation..venv.bin.activate_this",
+        "documentation": {}
+    },
+    {
+        "label": "fill",
+        "kind": 2,
+        "importPath": "dataset_generation.src.dataset_generation._bench_k0",
+        "description": "dataset_generation.src.dataset_generation._bench_k0",
+        "peekOfCode": "def fill(q_idx):\n    k0_base2[q_idx] = k0(tx[q_idx, None] * X_flat[None, :])\nlist(pool.map(fill, q_splits))  # warm-up\nt0 = time.perf_counter()\nfor _ in range(3):\n    list(pool.map(fill, q_splits))\nmt = (time.perf_counter()-t0)/3\nprint(f'{mod._N_THREADS}-thread k0:  {mt:.3f}s/call  ({st/mt:.1f}x speedup)')\n# 3: DGEMM W_eff @ k0_base\nD = 11",
+        "detail": "dataset_generation.src.dataset_generation._bench_k0",
+        "documentation": {}
+    },
+    {
+        "label": "tx",
+        "kind": 5,
+        "importPath": "dataset_generation.src.dataset_generation._bench_k0",
+        "description": "dataset_generation.src.dataset_generation._bench_k0",
+        "peekOfCode": "tx = mod._INTGRAL_TX\nQ  = len(tx)\nprint(f'Q={Q}, _N_THREADS={mod._N_THREADS}')\nnp.random.seed(42)\nX_flat = np.random.uniform(0.01, 5.0, 36*10000)\nM = len(X_flat)\nprint(f'Total k0 evals per call: {Q*M:,}  ({Q*M/1e6:.1f}M)')\n# 1: single-thread\nt0 = time.perf_counter()\nk0_base = k0(tx[:, None] * X_flat[None, :])",
+        "detail": "dataset_generation.src.dataset_generation._bench_k0",
+        "documentation": {}
+    },
+    {
+        "label": "X_flat",
+        "kind": 5,
+        "importPath": "dataset_generation.src.dataset_generation._bench_k0",
+        "description": "dataset_generation.src.dataset_generation._bench_k0",
+        "peekOfCode": "X_flat = np.random.uniform(0.01, 5.0, 36*10000)\nM = len(X_flat)\nprint(f'Total k0 evals per call: {Q*M:,}  ({Q*M/1e6:.1f}M)')\n# 1: single-thread\nt0 = time.perf_counter()\nk0_base = k0(tx[:, None] * X_flat[None, :])\nst = time.perf_counter()-t0\nprint(f'Single-thread k0 ({Q},{M}): {st:.3f}s')\n# 2: N_THREADS parallel over Q\npool = mod._get_pool()",
+        "detail": "dataset_generation.src.dataset_generation._bench_k0",
+        "documentation": {}
+    },
+    {
+        "label": "M",
+        "kind": 5,
+        "importPath": "dataset_generation.src.dataset_generation._bench_k0",
+        "description": "dataset_generation.src.dataset_generation._bench_k0",
+        "peekOfCode": "M = len(X_flat)\nprint(f'Total k0 evals per call: {Q*M:,}  ({Q*M/1e6:.1f}M)')\n# 1: single-thread\nt0 = time.perf_counter()\nk0_base = k0(tx[:, None] * X_flat[None, :])\nst = time.perf_counter()-t0\nprint(f'Single-thread k0 ({Q},{M}): {st:.3f}s')\n# 2: N_THREADS parallel over Q\npool = mod._get_pool()\nk0_base2 = np.empty((Q, M))",
+        "detail": "dataset_generation.src.dataset_generation._bench_k0",
+        "documentation": {}
+    },
+    {
+        "label": "t0",
+        "kind": 5,
+        "importPath": "dataset_generation.src.dataset_generation._bench_k0",
+        "description": "dataset_generation.src.dataset_generation._bench_k0",
+        "peekOfCode": "t0 = time.perf_counter()\nk0_base = k0(tx[:, None] * X_flat[None, :])\nst = time.perf_counter()-t0\nprint(f'Single-thread k0 ({Q},{M}): {st:.3f}s')\n# 2: N_THREADS parallel over Q\npool = mod._get_pool()\nk0_base2 = np.empty((Q, M))\nq_splits = [s for s in np.array_split(np.arange(Q), mod._N_THREADS) if len(s)]\ndef fill(q_idx):\n    k0_base2[q_idx] = k0(tx[q_idx, None] * X_flat[None, :])",
+        "detail": "dataset_generation.src.dataset_generation._bench_k0",
+        "documentation": {}
+    },
+    {
+        "label": "k0_base",
+        "kind": 5,
+        "importPath": "dataset_generation.src.dataset_generation._bench_k0",
+        "description": "dataset_generation.src.dataset_generation._bench_k0",
+        "peekOfCode": "k0_base = k0(tx[:, None] * X_flat[None, :])\nst = time.perf_counter()-t0\nprint(f'Single-thread k0 ({Q},{M}): {st:.3f}s')\n# 2: N_THREADS parallel over Q\npool = mod._get_pool()\nk0_base2 = np.empty((Q, M))\nq_splits = [s for s in np.array_split(np.arange(Q), mod._N_THREADS) if len(s)]\ndef fill(q_idx):\n    k0_base2[q_idx] = k0(tx[q_idx, None] * X_flat[None, :])\nlist(pool.map(fill, q_splits))  # warm-up",
+        "detail": "dataset_generation.src.dataset_generation._bench_k0",
+        "documentation": {}
+    },
+    {
+        "label": "st",
+        "kind": 5,
+        "importPath": "dataset_generation.src.dataset_generation._bench_k0",
+        "description": "dataset_generation.src.dataset_generation._bench_k0",
+        "peekOfCode": "st = time.perf_counter()-t0\nprint(f'Single-thread k0 ({Q},{M}): {st:.3f}s')\n# 2: N_THREADS parallel over Q\npool = mod._get_pool()\nk0_base2 = np.empty((Q, M))\nq_splits = [s for s in np.array_split(np.arange(Q), mod._N_THREADS) if len(s)]\ndef fill(q_idx):\n    k0_base2[q_idx] = k0(tx[q_idx, None] * X_flat[None, :])\nlist(pool.map(fill, q_splits))  # warm-up\nt0 = time.perf_counter()",
+        "detail": "dataset_generation.src.dataset_generation._bench_k0",
+        "documentation": {}
+    },
+    {
+        "label": "pool",
+        "kind": 5,
+        "importPath": "dataset_generation.src.dataset_generation._bench_k0",
+        "description": "dataset_generation.src.dataset_generation._bench_k0",
+        "peekOfCode": "pool = mod._get_pool()\nk0_base2 = np.empty((Q, M))\nq_splits = [s for s in np.array_split(np.arange(Q), mod._N_THREADS) if len(s)]\ndef fill(q_idx):\n    k0_base2[q_idx] = k0(tx[q_idx, None] * X_flat[None, :])\nlist(pool.map(fill, q_splits))  # warm-up\nt0 = time.perf_counter()\nfor _ in range(3):\n    list(pool.map(fill, q_splits))\nmt = (time.perf_counter()-t0)/3",
+        "detail": "dataset_generation.src.dataset_generation._bench_k0",
+        "documentation": {}
+    },
+    {
+        "label": "k0_base2",
+        "kind": 5,
+        "importPath": "dataset_generation.src.dataset_generation._bench_k0",
+        "description": "dataset_generation.src.dataset_generation._bench_k0",
+        "peekOfCode": "k0_base2 = np.empty((Q, M))\nq_splits = [s for s in np.array_split(np.arange(Q), mod._N_THREADS) if len(s)]\ndef fill(q_idx):\n    k0_base2[q_idx] = k0(tx[q_idx, None] * X_flat[None, :])\nlist(pool.map(fill, q_splits))  # warm-up\nt0 = time.perf_counter()\nfor _ in range(3):\n    list(pool.map(fill, q_splits))\nmt = (time.perf_counter()-t0)/3\nprint(f'{mod._N_THREADS}-thread k0:  {mt:.3f}s/call  ({st/mt:.1f}x speedup)')",
+        "detail": "dataset_generation.src.dataset_generation._bench_k0",
+        "documentation": {}
+    },
+    {
+        "label": "q_splits",
+        "kind": 5,
+        "importPath": "dataset_generation.src.dataset_generation._bench_k0",
+        "description": "dataset_generation.src.dataset_generation._bench_k0",
+        "peekOfCode": "q_splits = [s for s in np.array_split(np.arange(Q), mod._N_THREADS) if len(s)]\ndef fill(q_idx):\n    k0_base2[q_idx] = k0(tx[q_idx, None] * X_flat[None, :])\nlist(pool.map(fill, q_splits))  # warm-up\nt0 = time.perf_counter()\nfor _ in range(3):\n    list(pool.map(fill, q_splits))\nmt = (time.perf_counter()-t0)/3\nprint(f'{mod._N_THREADS}-thread k0:  {mt:.3f}s/call  ({st/mt:.1f}x speedup)')\n# 3: DGEMM W_eff @ k0_base",
+        "detail": "dataset_generation.src.dataset_generation._bench_k0",
+        "documentation": {}
+    },
+    {
+        "label": "t0",
+        "kind": 5,
+        "importPath": "dataset_generation.src.dataset_generation._bench_k0",
+        "description": "dataset_generation.src.dataset_generation._bench_k0",
+        "peekOfCode": "t0 = time.perf_counter()\nfor _ in range(3):\n    list(pool.map(fill, q_splits))\nmt = (time.perf_counter()-t0)/3\nprint(f'{mod._N_THREADS}-thread k0:  {mt:.3f}s/call  ({st/mt:.1f}x speedup)')\n# 3: DGEMM W_eff @ k0_base\nD = 11\nW = np.random.randn(D, Q)\n_ = W @ k0_base2  # warm-up\nt0 = time.perf_counter()",
+        "detail": "dataset_generation.src.dataset_generation._bench_k0",
+        "documentation": {}
+    },
+    {
+        "label": "mt",
+        "kind": 5,
+        "importPath": "dataset_generation.src.dataset_generation._bench_k0",
+        "description": "dataset_generation.src.dataset_generation._bench_k0",
+        "peekOfCode": "mt = (time.perf_counter()-t0)/3\nprint(f'{mod._N_THREADS}-thread k0:  {mt:.3f}s/call  ({st/mt:.1f}x speedup)')\n# 3: DGEMM W_eff @ k0_base\nD = 11\nW = np.random.randn(D, Q)\n_ = W @ k0_base2  # warm-up\nt0 = time.perf_counter()\nfor _ in range(10):\n    res = W @ k0_base2\ndg = (time.perf_counter()-t0)/10",
+        "detail": "dataset_generation.src.dataset_generation._bench_k0",
+        "documentation": {}
+    },
+    {
+        "label": "D",
+        "kind": 5,
+        "importPath": "dataset_generation.src.dataset_generation._bench_k0",
+        "description": "dataset_generation.src.dataset_generation._bench_k0",
+        "peekOfCode": "D = 11\nW = np.random.randn(D, Q)\n_ = W @ k0_base2  # warm-up\nt0 = time.perf_counter()\nfor _ in range(10):\n    res = W @ k0_base2\ndg = (time.perf_counter()-t0)/10\nprint(f'DGEMM ({D},{Q})@({Q},{M}): {dg*1000:.1f}ms/call')\nprint(f'\\nTotal per (a,K) call (threaded k0 + DGEMM): {mt+dg:.3f}s')\nprint(f'Vs observed sweep: ~1.4s/call  => overhead = ~{1.4-mt-dg:.2f}s from M/N/c computation')",
+        "detail": "dataset_generation.src.dataset_generation._bench_k0",
+        "documentation": {}
+    },
+    {
+        "label": "W",
+        "kind": 5,
+        "importPath": "dataset_generation.src.dataset_generation._bench_k0",
+        "description": "dataset_generation.src.dataset_generation._bench_k0",
+        "peekOfCode": "W = np.random.randn(D, Q)\n_ = W @ k0_base2  # warm-up\nt0 = time.perf_counter()\nfor _ in range(10):\n    res = W @ k0_base2\ndg = (time.perf_counter()-t0)/10\nprint(f'DGEMM ({D},{Q})@({Q},{M}): {dg*1000:.1f}ms/call')\nprint(f'\\nTotal per (a,K) call (threaded k0 + DGEMM): {mt+dg:.3f}s')\nprint(f'Vs observed sweep: ~1.4s/call  => overhead = ~{1.4-mt-dg:.2f}s from M/N/c computation')",
+        "detail": "dataset_generation.src.dataset_generation._bench_k0",
+        "documentation": {}
+    },
+    {
+        "label": "_",
+        "kind": 5,
+        "importPath": "dataset_generation.src.dataset_generation._bench_k0",
+        "description": "dataset_generation.src.dataset_generation._bench_k0",
+        "peekOfCode": "_ = W @ k0_base2  # warm-up\nt0 = time.perf_counter()\nfor _ in range(10):\n    res = W @ k0_base2\ndg = (time.perf_counter()-t0)/10\nprint(f'DGEMM ({D},{Q})@({Q},{M}): {dg*1000:.1f}ms/call')\nprint(f'\\nTotal per (a,K) call (threaded k0 + DGEMM): {mt+dg:.3f}s')\nprint(f'Vs observed sweep: ~1.4s/call  => overhead = ~{1.4-mt-dg:.2f}s from M/N/c computation')",
+        "detail": "dataset_generation.src.dataset_generation._bench_k0",
+        "documentation": {}
+    },
+    {
+        "label": "t0",
+        "kind": 5,
+        "importPath": "dataset_generation.src.dataset_generation._bench_k0",
+        "description": "dataset_generation.src.dataset_generation._bench_k0",
+        "peekOfCode": "t0 = time.perf_counter()\nfor _ in range(10):\n    res = W @ k0_base2\ndg = (time.perf_counter()-t0)/10\nprint(f'DGEMM ({D},{Q})@({Q},{M}): {dg*1000:.1f}ms/call')\nprint(f'\\nTotal per (a,K) call (threaded k0 + DGEMM): {mt+dg:.3f}s')\nprint(f'Vs observed sweep: ~1.4s/call  => overhead = ~{1.4-mt-dg:.2f}s from M/N/c computation')",
+        "detail": "dataset_generation.src.dataset_generation._bench_k0",
+        "documentation": {}
+    },
+    {
+        "label": "dg",
+        "kind": 5,
+        "importPath": "dataset_generation.src.dataset_generation._bench_k0",
+        "description": "dataset_generation.src.dataset_generation._bench_k0",
+        "peekOfCode": "dg = (time.perf_counter()-t0)/10\nprint(f'DGEMM ({D},{Q})@({Q},{M}): {dg*1000:.1f}ms/call')\nprint(f'\\nTotal per (a,K) call (threaded k0 + DGEMM): {mt+dg:.3f}s')\nprint(f'Vs observed sweep: ~1.4s/call  => overhead = ~{1.4-mt-dg:.2f}s from M/N/c computation')",
+        "detail": "dataset_generation.src.dataset_generation._bench_k0",
+        "documentation": {}
+    },
+    {
+        "label": "bench",
+        "kind": 2,
+        "importPath": "dataset_generation.src.dataset_generation._bench_sweep",
+        "description": "dataset_generation.src.dataset_generation._bench_sweep",
+        "peekOfCode": "def bench(name, fn, reps=5):\n    fn()  # warmup\n    t0 = time.perf_counter()\n    for _ in range(reps): fn()\n    print(f'{name}: {(time.perf_counter()-t0)/reps*1000:.1f}ms')\n# j0y0\nbench(\"j0+y0 (size,Q2)\", lambda: j0(X_arr) + 1j*y0(X_arr))\nj0y0 = j0(X_arr) + 1j*y0(X_arr)\nbench(\"j0y0 @ WPP (size,size)\", lambda: j0y0.reshape(size, Q2) @ WPP_rows.T)\nj0y0_WPP = j0y0.reshape(size, Q2) @ WPP_rows.T",
+        "detail": "dataset_generation.src.dataset_generation._bench_sweep",
+        "documentation": {}
+    },
+    {
+        "label": "m_bench",
+        "kind": 2,
+        "importPath": "dataset_generation.src.dataset_generation._bench_sweep",
+        "description": "dataset_generation.src.dataset_generation._bench_sweep",
+        "peekOfCode": "def m_bench():\n    denom2 = X_sq[None,:,:] + Zsq_bc\n    denom = np.sqrt(denom2)\n    denom3 = denom * denom2\n    denom5 = denom3 * denom2\n    return K3 * ((2*Z_bc-1)/denom3 + 3*Zsq_bc/denom5 + 2.0/denom)\nbench(\"M_all full (11,36,10000)\", m_bench)\nM_all = m_bench()\n# c_M DGEMM\nbench(\"c_M (396,10000)@(10000,36)\", lambda: ab * (M_all.reshape(n_d1*size, Q2) @ WPP_rows.T))",
+        "detail": "dataset_generation.src.dataset_generation._bench_sweep",
+        "documentation": {}
+    },
+    {
+        "label": "tx",
+        "kind": 5,
+        "importPath": "dataset_generation.src.dataset_generation._bench_sweep",
+        "description": "dataset_generation.src.dataset_generation._bench_sweep",
+        "peekOfCode": "tx = mod._INTGRAL_TX\nQ  = len(tx); Q2 = Q*Q; N = 5; size = (N+1)**2\nn_d1 = 11; K = 1.0; a = 1.0; b = 1.0; K3 = K**3; ab = a*b\nnp.random.seed(42)\nX_arr  = np.random.uniform(0.01, 5.0, (size, Q2))\nX_sq   = X_arr * X_arr\nWPP_rows = np.random.randn(size, Q2)\nintgral_all = np.random.randn(n_d1, size*Q2)  # (11, 360000)\nd_vals = np.linspace(0.5, 1.5, n_d1)\nZ_vals_K = 2.0 * K * d_vals",
+        "detail": "dataset_generation.src.dataset_generation._bench_sweep",
+        "documentation": {}
+    },
+    {
+        "label": "n_d1",
+        "kind": 5,
+        "importPath": "dataset_generation.src.dataset_generation._bench_sweep",
+        "description": "dataset_generation.src.dataset_generation._bench_sweep",
+        "peekOfCode": "n_d1 = 11; K = 1.0; a = 1.0; b = 1.0; K3 = K**3; ab = a*b\nnp.random.seed(42)\nX_arr  = np.random.uniform(0.01, 5.0, (size, Q2))\nX_sq   = X_arr * X_arr\nWPP_rows = np.random.randn(size, Q2)\nintgral_all = np.random.randn(n_d1, size*Q2)  # (11, 360000)\nd_vals = np.linspace(0.5, 1.5, n_d1)\nZ_vals_K = 2.0 * K * d_vals\ndef bench(name, fn, reps=5):\n    fn()  # warmup",
+        "detail": "dataset_generation.src.dataset_generation._bench_sweep",
+        "documentation": {}
+    },
+    {
+        "label": "WPP_rows",
+        "kind": 5,
+        "importPath": "dataset_generation.src.dataset_generation._bench_sweep",
+        "description": "dataset_generation.src.dataset_generation._bench_sweep",
+        "peekOfCode": "WPP_rows = np.random.randn(size, Q2)\nintgral_all = np.random.randn(n_d1, size*Q2)  # (11, 360000)\nd_vals = np.linspace(0.5, 1.5, n_d1)\nZ_vals_K = 2.0 * K * d_vals\ndef bench(name, fn, reps=5):\n    fn()  # warmup\n    t0 = time.perf_counter()\n    for _ in range(reps): fn()\n    print(f'{name}: {(time.perf_counter()-t0)/reps*1000:.1f}ms')\n# j0y0",
+        "detail": "dataset_generation.src.dataset_generation._bench_sweep",
+        "documentation": {}
+    },
+    {
+        "label": "intgral_all",
+        "kind": 5,
+        "importPath": "dataset_generation.src.dataset_generation._bench_sweep",
+        "description": "dataset_generation.src.dataset_generation._bench_sweep",
+        "peekOfCode": "intgral_all = np.random.randn(n_d1, size*Q2)  # (11, 360000)\nd_vals = np.linspace(0.5, 1.5, n_d1)\nZ_vals_K = 2.0 * K * d_vals\ndef bench(name, fn, reps=5):\n    fn()  # warmup\n    t0 = time.perf_counter()\n    for _ in range(reps): fn()\n    print(f'{name}: {(time.perf_counter()-t0)/reps*1000:.1f}ms')\n# j0y0\nbench(\"j0+y0 (size,Q2)\", lambda: j0(X_arr) + 1j*y0(X_arr))",
+        "detail": "dataset_generation.src.dataset_generation._bench_sweep",
+        "documentation": {}
+    },
+    {
+        "label": "d_vals",
+        "kind": 5,
+        "importPath": "dataset_generation.src.dataset_generation._bench_sweep",
+        "description": "dataset_generation.src.dataset_generation._bench_sweep",
+        "peekOfCode": "d_vals = np.linspace(0.5, 1.5, n_d1)\nZ_vals_K = 2.0 * K * d_vals\ndef bench(name, fn, reps=5):\n    fn()  # warmup\n    t0 = time.perf_counter()\n    for _ in range(reps): fn()\n    print(f'{name}: {(time.perf_counter()-t0)/reps*1000:.1f}ms')\n# j0y0\nbench(\"j0+y0 (size,Q2)\", lambda: j0(X_arr) + 1j*y0(X_arr))\nj0y0 = j0(X_arr) + 1j*y0(X_arr)",
+        "detail": "dataset_generation.src.dataset_generation._bench_sweep",
+        "documentation": {}
+    },
+    {
+        "label": "Z_vals_K",
+        "kind": 5,
+        "importPath": "dataset_generation.src.dataset_generation._bench_sweep",
+        "description": "dataset_generation.src.dataset_generation._bench_sweep",
+        "peekOfCode": "Z_vals_K = 2.0 * K * d_vals\ndef bench(name, fn, reps=5):\n    fn()  # warmup\n    t0 = time.perf_counter()\n    for _ in range(reps): fn()\n    print(f'{name}: {(time.perf_counter()-t0)/reps*1000:.1f}ms')\n# j0y0\nbench(\"j0+y0 (size,Q2)\", lambda: j0(X_arr) + 1j*y0(X_arr))\nj0y0 = j0(X_arr) + 1j*y0(X_arr)\nbench(\"j0y0 @ WPP (size,size)\", lambda: j0y0.reshape(size, Q2) @ WPP_rows.T)",
+        "detail": "dataset_generation.src.dataset_generation._bench_sweep",
+        "documentation": {}
+    },
+    {
+        "label": "j0y0",
+        "kind": 5,
+        "importPath": "dataset_generation.src.dataset_generation._bench_sweep",
+        "description": "dataset_generation.src.dataset_generation._bench_sweep",
+        "peekOfCode": "j0y0 = j0(X_arr) + 1j*y0(X_arr)\nbench(\"j0y0 @ WPP (size,size)\", lambda: j0y0.reshape(size, Q2) @ WPP_rows.T)\nj0y0_WPP = j0y0.reshape(size, Q2) @ WPP_rows.T\n# M computation\nbench(\"denom2 + denom\", lambda: np.sqrt(X_sq[None,:,:] + (Z_vals_K**2)[:,None,None]))\nZ_bc   = Z_vals_K[:, None, None]\nZsq_bc = (Z_vals_K*Z_vals_K)[:, None, None]\ndef m_bench():\n    denom2 = X_sq[None,:,:] + Zsq_bc\n    denom = np.sqrt(denom2)",
+        "detail": "dataset_generation.src.dataset_generation._bench_sweep",
+        "documentation": {}
+    },
+    {
+        "label": "j0y0_WPP",
+        "kind": 5,
+        "importPath": "dataset_generation.src.dataset_generation._bench_sweep",
+        "description": "dataset_generation.src.dataset_generation._bench_sweep",
+        "peekOfCode": "j0y0_WPP = j0y0.reshape(size, Q2) @ WPP_rows.T\n# M computation\nbench(\"denom2 + denom\", lambda: np.sqrt(X_sq[None,:,:] + (Z_vals_K**2)[:,None,None]))\nZ_bc   = Z_vals_K[:, None, None]\nZsq_bc = (Z_vals_K*Z_vals_K)[:, None, None]\ndef m_bench():\n    denom2 = X_sq[None,:,:] + Zsq_bc\n    denom = np.sqrt(denom2)\n    denom3 = denom * denom2\n    denom5 = denom3 * denom2",
+        "detail": "dataset_generation.src.dataset_generation._bench_sweep",
+        "documentation": {}
+    },
+    {
+        "label": "Zsq_bc",
+        "kind": 5,
+        "importPath": "dataset_generation.src.dataset_generation._bench_sweep",
+        "description": "dataset_generation.src.dataset_generation._bench_sweep",
+        "peekOfCode": "Zsq_bc = (Z_vals_K*Z_vals_K)[:, None, None]\ndef m_bench():\n    denom2 = X_sq[None,:,:] + Zsq_bc\n    denom = np.sqrt(denom2)\n    denom3 = denom * denom2\n    denom5 = denom3 * denom2\n    return K3 * ((2*Z_bc-1)/denom3 + 3*Zsq_bc/denom5 + 2.0/denom)\nbench(\"M_all full (11,36,10000)\", m_bench)\nM_all = m_bench()\n# c_M DGEMM",
+        "detail": "dataset_generation.src.dataset_generation._bench_sweep",
+        "documentation": {}
+    },
+    {
+        "label": "M_all",
+        "kind": 5,
+        "importPath": "dataset_generation.src.dataset_generation._bench_sweep",
+        "description": "dataset_generation.src.dataset_generation._bench_sweep",
+        "peekOfCode": "M_all = m_bench()\n# c_M DGEMM\nbench(\"c_M (396,10000)@(10000,36)\", lambda: ab * (M_all.reshape(n_d1*size, Q2) @ WPP_rows.T))\n# c_I DGEMM\nbench(\"c_I (396,10000)@(10000,36)\", lambda: (-ab*K3*4/np.pi) * (intgral_all.reshape(n_d1*size, Q2) @ WPP_rows.T))\n# c_J scaling\nexp_Z = np.exp(-Z_vals_K)\nbench(\"c_J scaling (trivial)\", lambda: (ab*K3*2*np.pi*1j) * (exp_Z[:,None,None] * j0y0_WPP))",
+        "detail": "dataset_generation.src.dataset_generation._bench_sweep",
+        "documentation": {}
+    },
+    {
+        "label": "exp_Z",
+        "kind": 5,
+        "importPath": "dataset_generation.src.dataset_generation._bench_sweep",
+        "description": "dataset_generation.src.dataset_generation._bench_sweep",
+        "peekOfCode": "exp_Z = np.exp(-Z_vals_K)\nbench(\"c_J scaling (trivial)\", lambda: (ab*K3*2*np.pi*1j) * (exp_Z[:,None,None] * j0y0_WPP))",
+        "detail": "dataset_generation.src.dataset_generation._bench_sweep",
+        "documentation": {}
+    },
+    {
+        "label": "evaluate_phi",
+        "kind": 2,
+        "importPath": "dataset_generation.src.dataset_generation.generate_dataset",
+        "description": "dataset_generation.src.dataset_generation.generate_dataset",
+        "peekOfCode": "def evaluate_phi(X_sol, N, s_pts, alpha_pts):\n    \"\"\"\n    Evaluates the potential difference [phi] at given points (s, alpha)\n    using the series expansion and coefficients X_sol.\n    \"\"\"\n    phi_vals = np.zeros_like(s_pts, dtype=np.complex128)\n    q_idx = 0\n    for k in range(N + 1):\n        for m in range(N + 1):\n            p1 = opt.alform(k, m, s_pts)",
+        "detail": "dataset_generation.src.dataset_generation.generate_dataset",
+        "documentation": {}
+    },
+    {
+        "label": "generate_symmetric_points",
+        "kind": 2,
+        "importPath": "dataset_generation.src.dataset_generation.generate_dataset",
+        "description": "dataset_generation.src.dataset_generation.generate_dataset",
+        "peekOfCode": "def generate_symmetric_points(N_s=3, N_alpha=8):\n    \"\"\"\n    Generates radially symmetric points on the disc (in terms of s and alpha).\n    s values will be distributed in rings, with one point at the origin.\n    Returns 1D arrays of s and alpha values.\n    \"\"\"\n    # Exclude s=0 from linspace to add it explicitly as a single center point\n    s_vals = np.linspace(0, 1, N_s + 1)[1:]\n    alpha_vals = np.linspace(0, 2*np.pi, N_alpha, endpoint=False)\n    s_pts = [0.0]",
+        "detail": "dataset_generation.src.dataset_generation.generate_dataset",
+        "documentation": {}
+    },
+    {
+        "label": "main",
+        "kind": 2,
+        "importPath": "dataset_generation.src.dataset_generation.generate_dataset",
+        "description": "dataset_generation.src.dataset_generation.generate_dataset",
+        "peekOfCode": "def main():\n    # Grid of parameters to sample\n    a_b_list = [1.0, 1.25, 1.5, 1.75, 2.0]\n    d_b_list = [0.1, 0.2, 0.3, 0.4]\n    K_list = np.linspace(0.5, 2.0, 4)  # Non-dimensional wave number K\n    N = 5 # Truncation order\n    b = 1.0 # Keep semi-minor axis at 1 for non-dimensionalization\n    # Generate points\n    s_pts, alpha_pts = generate_symmetric_points(N_s=3, N_alpha=8)\n    num_points = len(s_pts)",
+        "detail": "dataset_generation.src.dataset_generation.generate_dataset",
+        "documentation": {}
+    },
+    {
+        "label": "lgwt",
+        "kind": 2,
+        "importPath": "dataset_generation.src.dataset_generation.problemcodeAMDC",
+        "description": "dataset_generation.src.dataset_generation.problemcodeAMDC",
+        "peekOfCode": "def lgwt(N, a, b):\n    \"\"\"\n    Computes the Legendre-Gauss nodes and weights on an interval [a,b] \n    with truncation order N.\n    \"\"\"\n    # numpy's leggauss returns roots and weights for interval [-1, 1]\n    x, w = np.polynomial.legendre.leggauss(N)\n    # Linear map from [-1, 1] to [a, b]\n    x_mapped = 0.5 * (a * (1 - x) + b * (1 + x))\n    w_mapped = w * 0.5 * (b - a)",
+        "detail": "dataset_generation.src.dataset_generation.problemcodeAMDC",
+        "documentation": {}
+    },
+    {
+        "label": "alform",
+        "kind": 2,
+        "importPath": "dataset_generation.src.dataset_generation.problemcodeAMDC",
+        "description": "dataset_generation.src.dataset_generation.problemcodeAMDC",
+        "peekOfCode": "def alform(k, m, s):\n    func = _get_alform_func(k, m)\n    res = func(s)\n    # Handle the case where the derivative evaluates to a scalar constant\n    if np.isscalar(res) and np.ndim(s) > 0:\n        return np.full_like(s, res, dtype=np.float64)\n    return res\n# ==========================================\n# alform2.m\n# ==========================================",
+        "detail": "dataset_generation.src.dataset_generation.problemcodeAMDC",
+        "documentation": {}
+    },
+    {
+        "label": "alform2",
+        "kind": 2,
+        "importPath": "dataset_generation.src.dataset_generation.problemcodeAMDC",
+        "description": "dataset_generation.src.dataset_generation.problemcodeAMDC",
+        "peekOfCode": "def alform2(k, m, l_val, s):\n    func = _get_alform2_func(k, m, l_val)\n    res = func(s)\n    if np.isscalar(res) and np.ndim(s) > 0:\n        return np.full_like(s, res, dtype=np.float64)\n    return res\n# ==========================================\n# alform3.m\n# ==========================================\ndef alform3(k, m, l_val, s):",
+        "detail": "dataset_generation.src.dataset_generation.problemcodeAMDC",
+        "documentation": {}
+    },
+    {
+        "label": "alform3",
+        "kind": 2,
+        "importPath": "dataset_generation.src.dataset_generation.problemcodeAMDC",
+        "description": "dataset_generation.src.dataset_generation.problemcodeAMDC",
+        "peekOfCode": "def alform3(k, m, l_val, s):\n    func = _get_alform3_func(k, m, l_val)\n    res = func(s)\n    if np.isscalar(res) and np.ndim(s) > 0:\n        return np.full_like(s, res, dtype=np.float64)\n    return res\n# ==========================================\n# integralv.m\n# ==========================================\ndef intgralv(z, X):",
+        "detail": "dataset_generation.src.dataset_generation.problemcodeAMDC",
+        "documentation": {}
+    },
+    {
+        "label": "intgralv",
+        "kind": 2,
+        "importPath": "dataset_generation.src.dataset_generation.problemcodeAMDC",
+        "description": "dataset_generation.src.dataset_generation.problemcodeAMDC",
+        "peekOfCode": "def intgralv(z, X):\n    N = 100\n    c = 0\n    d = np.pi / 2\n    x, w = lgwt(N, c, d)\n    z = np.asarray(z)\n    X = np.asarray(X)\n    # Reshape x and w to broadcast appropriately against X\n    # e.g., if X is shape (10000,), this forces x and w to (100, 1)\n    broadcast_shape = (N,) + (1,) * X.ndim",
+        "detail": "dataset_generation.src.dataset_generation.problemcodeAMDC",
+        "documentation": {}
+    },
+    {
+        "label": "check",
+        "kind": 2,
+        "importPath": "dataset_generation.src.dataset_generation.problemcodeAMDC",
+        "description": "dataset_generation.src.dataset_generation.problemcodeAMDC",
+        "peekOfCode": "def check(r, theta, s, alpha, d_val, K, a, b):\n    x = a * r * np.cos(theta)\n    y = b * r * np.sin(theta)\n    gi = a * s * np.cos(alpha)\n    eta = b * s * np.sin(alpha)\n    R = np.sqrt((x - gi)**2 + (y - eta)**2)\n    X = K * R\n    z = -d_val\n    nu = -d_val\n    Z = -K * (z + nu)",
+        "detail": "dataset_generation.src.dataset_generation.problemcodeAMDC",
+        "documentation": {}
+    },
+    {
+        "label": "kernel",
+        "kind": 2,
+        "importPath": "dataset_generation.src.dataset_generation.problemcodeAMDC",
+        "description": "dataset_generation.src.dataset_generation.problemcodeAMDC",
+        "peekOfCode": "def kernel(x, y, s, alpha, K, a, b, d_val):\n    gi = a * s * np.cos(alpha)\n    eta = b * s * np.sin(alpha)\n    R = np.sqrt((x - gi)**2 + (y - eta)**2)\n    X = K * R\n    Y = K * d_val\n    denom2 = X**2 + Y**2\n    P = (K**2) * (\n        2 * Y / (denom2**1.5) + \n        2 / np.sqrt(denom2) + ",
+        "detail": "dataset_generation.src.dataset_generation.problemcodeAMDC",
+        "documentation": {}
+    },
+    {
+        "label": "doubleintC",
+        "kind": 2,
+        "importPath": "dataset_generation.src.dataset_generation.problemcodeAMDC",
+        "description": "dataset_generation.src.dataset_generation.problemcodeAMDC",
+        "peekOfCode": "def doubleintC(k, m, r, theta, depth, K, a, b):\n    x1, w1 = lgwt(100, 0, 1)\n    x2, w2 = lgwt(100, 0, 2 * np.pi)\n    w = np.outer(w1, w2)\n    # meshgrid returning shape correctly mapped to matrix\n    x, y = np.meshgrid(x1, x2, indexing='xy')\n    # Unwrapping via Fortran column-major order equivalent to MATLAB's linear indexing\n    x_flat = x.flatten(order='F')\n    y_flat = y.flatten(order='F')\n    p3_flat = check(r, theta, x_flat, y_flat, depth, K, a, b)",
+        "detail": "dataset_generation.src.dataset_generation.problemcodeAMDC",
+        "documentation": {}
+    },
+    {
+        "label": "getgl",
+        "kind": 2,
+        "importPath": "dataset_generation.src.dataset_generation.problemcodeAMDC",
+        "description": "dataset_generation.src.dataset_generation.problemcodeAMDC",
+        "peekOfCode": "def getgl(l_array, a, b):\n    N = 100\n    c = -np.pi\n    d = np.pi\n    x, w = lgwt(N, c, d)\n    l_array = np.asarray(l_array)\n    gval1 = a * b * (a**2 * np.cos(x)**2 + b**2 * np.sin(x)**2)**(-1.5) * w\n    # Broadcast to perform matrix multiplication natively\n    gval2 = np.exp(-2j * x[:, None] * l_array[None, :])\n    gval = (1 / (2 * np.pi)) * np.sum(gval1[:, None] * gval2, axis=0)",
+        "detail": "dataset_generation.src.dataset_generation.problemcodeAMDC",
+        "documentation": {}
+    },
+    {
+        "label": "hyperterm",
+        "kind": 2,
+        "importPath": "dataset_generation.src.dataset_generation.problemcodeAMDC",
+        "description": "dataset_generation.src.dataset_generation.problemcodeAMDC",
+        "peekOfCode": "def hyperterm(l1_array, k, m, r, theta):\n    l1_array = np.asarray(l1_array)\n    is_scalar = l1_array.ndim == 0\n    if is_scalar:\n        l1_array = np.array([l1_array])\n    l_arr = 2 * l1_array\n    B = np.zeros_like(l_arr, dtype=np.complex128)\n    for i, l_val in enumerate(l_arr):\n        # Cast l_val to standard python int here as well!\n        l_val = int(l_val) ",
+        "detail": "dataset_generation.src.dataset_generation.problemcodeAMDC",
+        "documentation": {}
+    },
+    {
+        "label": "problemcodeAMDC",
+        "kind": 2,
+        "importPath": "dataset_generation.src.dataset_generation.problemcodeAMDC",
+        "description": "dataset_generation.src.dataset_generation.problemcodeAMDC",
+        "peekOfCode": "def problemcodeAMDC(N, d_val, K, a, b):\n    n = np.arange(N + 1)\n    size = (N + 1)**2\n    A = np.zeros((size, size), dtype=np.complex128)\n    c = np.zeros((size, size), dtype=np.complex128)\n    theta = (2 * n + 1) * np.pi / (2 * N + 2)\n    r = np.cos(theta / 2)\n    R_grid, THETA_grid = np.meshgrid(r, theta, indexing='xy')\n    R_flat = R_grid.flatten(order='F')\n    THETA_flat = THETA_grid.flatten(order='F')",
+        "detail": "dataset_generation.src.dataset_generation.problemcodeAMDC",
+        "documentation": {}
+    },
+    {
+        "label": "lgwt",
+        "kind": 2,
+        "importPath": "dataset_generation.src.dataset_generation.problemcodeAMDC_opt",
+        "description": "dataset_generation.src.dataset_generation.problemcodeAMDC_opt",
+        "peekOfCode": "def lgwt(N, a, b):\n    return _legendre_nodes(N, a, b)\n# ──────────────────────────────────────────────────────────────────────\n# Module-level shared quadrature grids  (lazy init)\n# ──────────────────────────────────────────────────────────────────────\n_QUAD_N = 100\n_INTGRAL_X = _INTGRAL_W = _INTGRAL_TX = None\n_DIC_X1 = _DIC_W1 = _DIC_X2 = _DIC_W2 = None\n_DIC_W = _DIC_X1_FLAT = _DIC_X2_FLAT = None\n# Cache of Z-dependent effective weights  key: float(Z) → (Q,) array",
+        "detail": "dataset_generation.src.dataset_generation.problemcodeAMDC_opt",
+        "documentation": {}
+    },
+    {
+        "label": "alfor",
+        "kind": 2,
+        "importPath": "dataset_generation.src.dataset_generation.problemcodeAMDC_opt",
+        "description": "dataset_generation.src.dataset_generation.problemcodeAMDC_opt",
+        "peekOfCode": "def alform (k, m,    s): return _eval_lambdify(_get_alform_func (k, m),    s)\ndef alform2(k, m, l, s): return _eval_lambdify(_get_alform2_func(k, m, l), s)\ndef alform3(k, m, l, s): return _eval_lambdify(_get_alform3_func(k, m, l), s)\n# ──────────────────────────────────────────────────────────────────────\n# intgralv — scalar-Z fast path, thread-parallel over Q axis\n# ──────────────────────────────────────────────────────────────────────\ndef intgralv(Z, X):\n    \"\"\"\n    Gauss-Legendre approximation on [0, π/2].\n    Scalar-Z fast path",
+        "detail": "dataset_generation.src.dataset_generation.problemcodeAMDC_opt",
+        "documentation": {}
+    },
+    {
+        "label": "alform2",
+        "kind": 2,
+        "importPath": "dataset_generation.src.dataset_generation.problemcodeAMDC_opt",
+        "description": "dataset_generation.src.dataset_generation.problemcodeAMDC_opt",
+        "peekOfCode": "def alform2(k, m, l, s): return _eval_lambdify(_get_alform2_func(k, m, l), s)\ndef alform3(k, m, l, s): return _eval_lambdify(_get_alform3_func(k, m, l), s)\n# ──────────────────────────────────────────────────────────────────────\n# intgralv — scalar-Z fast path, thread-parallel over Q axis\n# ──────────────────────────────────────────────────────────────────────\ndef intgralv(Z, X):\n    \"\"\"\n    Gauss-Legendre approximation on [0, π/2].\n    Scalar-Z fast path\n    ------------------",
+        "detail": "dataset_generation.src.dataset_generation.problemcodeAMDC_opt",
+        "documentation": {}
+    },
+    {
+        "label": "alform3",
+        "kind": 2,
+        "importPath": "dataset_generation.src.dataset_generation.problemcodeAMDC_opt",
+        "description": "dataset_generation.src.dataset_generation.problemcodeAMDC_opt",
+        "peekOfCode": "def alform3(k, m, l, s): return _eval_lambdify(_get_alform3_func(k, m, l), s)\n# ──────────────────────────────────────────────────────────────────────\n# intgralv — scalar-Z fast path, thread-parallel over Q axis\n# ──────────────────────────────────────────────────────────────────────\ndef intgralv(Z, X):\n    \"\"\"\n    Gauss-Legendre approximation on [0, π/2].\n    Scalar-Z fast path\n    ------------------\n    • w_eff = w_q · (tx·sin(Z·tx) + cos(Z·tx)) cached per unique Z.",
+        "detail": "dataset_generation.src.dataset_generation.problemcodeAMDC_opt",
+        "documentation": {}
+    },
+    {
+        "label": "intgralv",
+        "kind": 2,
+        "importPath": "dataset_generation.src.dataset_generation.problemcodeAMDC_opt",
+        "description": "dataset_generation.src.dataset_generation.problemcodeAMDC_opt",
+        "peekOfCode": "def intgralv(Z, X):\n    \"\"\"\n    Gauss-Legendre approximation on [0, π/2].\n    Scalar-Z fast path\n    ------------------\n    • w_eff = w_q · (tx·sin(Z·tx) + cos(Z·tx)) cached per unique Z.\n    • k0 evaluations split across _N_THREADS threads along the Q=100\n      quadrature axis.  Each thread computes:\n          partial[t] = w_eff[q_t] @ k0(tx[q_t, None] * X_flat[None, :])\n      All partials are summed → result.",
+        "detail": "dataset_generation.src.dataset_generation.problemcodeAMDC_opt",
+        "documentation": {}
+    },
+    {
+        "label": "check",
+        "kind": 2,
+        "importPath": "dataset_generation.src.dataset_generation.problemcodeAMDC_opt",
+        "description": "dataset_generation.src.dataset_generation.problemcodeAMDC_opt",
+        "peekOfCode": "def check(r, theta, s, alpha, d_val, K, a, b):\n    x   = a*r*np.cos(theta);    y   = b*r*np.sin(theta)\n    gi  = a*s*np.cos(alpha);    eta = b*s*np.sin(alpha)\n    X_arr  = K * np.sqrt((x-gi)**2 + (y-eta)**2)\n    Z_scal = 2.0 * K * d_val         # scalar\n    denom2 = X_arr**2 + Z_scal**2;   denom = np.sqrt(denom2)\n    M = (K**3)*((2*Z_scal-1)/denom2**1.5 + 3*Z_scal**2/denom2**2.5 + 1/denom) \\\n        + (K**3)/denom\n    N_val = (K**3)*(2*np.pi*1j*(j0(X_arr)+1j*y0(X_arr))*np.exp(-Z_scal)\n                    - (4/np.pi)*intgralv(Z_scal, X_arr))",
+        "detail": "dataset_generation.src.dataset_generation.problemcodeAMDC_opt",
+        "documentation": {}
+    },
+    {
+        "label": "kernel",
+        "kind": 2,
+        "importPath": "dataset_generation.src.dataset_generation.problemcodeAMDC_opt",
+        "description": "dataset_generation.src.dataset_generation.problemcodeAMDC_opt",
+        "peekOfCode": "def kernel(x, y, s, alpha, K, a, b, d_val):\n    gi  = a*s*np.cos(alpha);  eta = b*s*np.sin(alpha)\n    R   = np.sqrt((x-gi)**2+(y-eta)**2);  X = K*R;  Y = K*d_val\n    d2  = X**2+Y**2\n    return (K**2)*(2*Y/d2**1.5 + 2/np.sqrt(d2)\n                   + 2*np.pi*1j*np.exp(-Y)*(j0(X)+1j*y0(X))\n                   - (4/np.pi)*intgralv(Y, X))\n# ──────────────────────────────────────────────────────────────────────\n# doubleintC helpers\n# ──────────────────────────────────────────────────────────────────────",
+        "detail": "dataset_generation.src.dataset_generation.problemcodeAMDC_opt",
+        "documentation": {}
+    },
+    {
+        "label": "doubleintC_precomputed",
+        "kind": 2,
+        "importPath": "dataset_generation.src.dataset_generation.problemcodeAMDC_opt",
+        "description": "dataset_generation.src.dataset_generation.problemcodeAMDC_opt",
+        "peekOfCode": "def doubleintC_precomputed(r_pt, theta_pt, depth, K, a, b):\n    _ensure_dic_cache()\n    p3 = check(r_pt, theta_pt, _DIC_X1_FLAT, _DIC_X2_FLAT, depth, K, a, b)\n    return p3.reshape((_QUAD_N, _QUAD_N))\ndef doubleintC_batch(R_pts, THETA_pts, depth, K, a, b):\n    \"\"\"\n    Batch check() for ALL len(R_pts) collocation points × Q² quadrature pts.\n    Returns shape (size, Q, Q).\n    \"\"\"\n    _ensure_dic_cache()",
+        "detail": "dataset_generation.src.dataset_generation.problemcodeAMDC_opt",
+        "documentation": {}
+    },
+    {
+        "label": "doubleintC_batch",
+        "kind": 2,
+        "importPath": "dataset_generation.src.dataset_generation.problemcodeAMDC_opt",
+        "description": "dataset_generation.src.dataset_generation.problemcodeAMDC_opt",
+        "peekOfCode": "def doubleintC_batch(R_pts, THETA_pts, depth, K, a, b):\n    \"\"\"\n    Batch check() for ALL len(R_pts) collocation points × Q² quadrature pts.\n    Returns shape (size, Q, Q).\n    \"\"\"\n    _ensure_dic_cache()\n    x   = a*R_pts[:,None]         * np.cos(THETA_pts[:,None])\n    y   = b*R_pts[:,None]         * np.sin(THETA_pts[:,None])\n    gi  = a*_DIC_X1_FLAT[None,:] * np.cos(_DIC_X2_FLAT[None,:])\n    eta = b*_DIC_X1_FLAT[None,:] * np.sin(_DIC_X2_FLAT[None,:])",
+        "detail": "dataset_generation.src.dataset_generation.problemcodeAMDC_opt",
+        "documentation": {}
+    },
+    {
+        "label": "doubleintC",
+        "kind": 2,
+        "importPath": "dataset_generation.src.dataset_generation.problemcodeAMDC_opt",
+        "description": "dataset_generation.src.dataset_generation.problemcodeAMDC_opt",
+        "peekOfCode": "def doubleintC(k, m, r_pt, theta_pt, depth, K, a, b, p4_T=None):\n    _ensure_dic_cache()\n    if p4_T is None:\n        p4_T = doubleintC_precomputed(r_pt, theta_pt, depth, K, a, b)\n    p1 = alform(k, m, _DIC_X1)*_DIC_X1\n    return a*b*np.sum(_DIC_W*np.outer(p1, np.cos(m*_DIC_X2))*p4_T)\n# ──────────────────────────────────────────────────────────────────────\n# getgl — cached by (l_tuple, a, b)\n# ──────────────────────────────────────────────────────────────────────\n@functools.lru_cache(maxsize=None)",
+        "detail": "dataset_generation.src.dataset_generation.problemcodeAMDC_opt",
+        "documentation": {}
+    },
+    {
+        "label": "getgl",
+        "kind": 2,
+        "importPath": "dataset_generation.src.dataset_generation.problemcodeAMDC_opt",
+        "description": "dataset_generation.src.dataset_generation.problemcodeAMDC_opt",
+        "peekOfCode": "def getgl(l_array, a, b):\n    return _getgl_cached(tuple(np.asarray(l_array).tolist()), a, b)\n# ──────────────────────────────────────────────────────────────────────\n# hyperterm  (public utility; not called by the solver)\n# ──────────────────────────────────────────────────────────────────────\ndef hyperterm(l1_array, k, m, r, theta):\n    l1_array = np.asarray(l1_array, dtype=np.float64)\n    scalar = l1_array.ndim == 0\n    if scalar: l1_array = np.atleast_1d(l1_array)\n    l_arr = (2*l1_array).astype(int)",
+        "detail": "dataset_generation.src.dataset_generation.problemcodeAMDC_opt",
+        "documentation": {}
+    },
+    {
+        "label": "hyperterm",
+        "kind": 2,
+        "importPath": "dataset_generation.src.dataset_generation.problemcodeAMDC_opt",
+        "description": "dataset_generation.src.dataset_generation.problemcodeAMDC_opt",
+        "peekOfCode": "def hyperterm(l1_array, k, m, r, theta):\n    l1_array = np.asarray(l1_array, dtype=np.float64)\n    scalar = l1_array.ndim == 0\n    if scalar: l1_array = np.atleast_1d(l1_array)\n    l_arr = (2*l1_array).astype(int)\n    g_km = gamma(k+1.5);  g_km1 = gamma(k+m+1)\n    f1 = factorial(2*k+1,exact=False);  f2 = factorial(2*k+2*m+1,exact=False)\n    Clmk = (-1.0)**(l_arr+2*m)*(\n        (np.pi*2.0**(l_arr+2)/(l_arr**2-1))\n        *(factorial(2*k-l_arr+1,exact=False)/factorial(2*k+2*m+l_arr+1,exact=False))",
+        "detail": "dataset_generation.src.dataset_generation.problemcodeAMDC_opt",
+        "documentation": {}
+    },
+    {
+        "label": "problemcodeAMDC",
+        "kind": 2,
+        "importPath": "dataset_generation.src.dataset_generation.problemcodeAMDC_opt",
+        "description": "dataset_generation.src.dataset_generation.problemcodeAMDC_opt",
+        "peekOfCode": "def problemcodeAMDC(N, d_val, K, a, b):\n    \"\"\"\n    Solve the rigid-elliptic-disc BVP.\n    Pipeline\n    --------\n    Phase 1  : doubleintC_batch → intgralv (thread-parallel over Q axis).\n    Phase 2  : eager pre-computation (thread-parallel over km_pairs).\n    Phase 3  : c = (a·b)·P4_mat @ WPP_rows.T         [one dgemm]\n    Phase 4  : A columns = ht_mat.T @ gl per (k,m)  [thread-parallel]\n    Phase 5  : solve C·X = f.",
+        "detail": "dataset_generation.src.dataset_generation.problemcodeAMDC_opt",
+        "documentation": {}
+    },
+    {
+        "label": "sweep_problemcodeAMDC",
+        "kind": 2,
+        "importPath": "dataset_generation.src.dataset_generation.problemcodeAMDC_opt",
+        "description": "dataset_generation.src.dataset_generation.problemcodeAMDC_opt",
+        "peekOfCode": "def sweep_problemcodeAMDC(\n    a0, a1, n_a,\n    d0, d1, n_d,\n    k0_val, k1_val, n_k,\n    N=5, b=1.0,\n):\n    \"\"\"\n    Evaluate problemcodeAMDC(N, d, K, a, b) for every (a, d, K) triple.\n        a in linspace(a0, a1, n_a+1)\n        d in linspace(d0, d1, n_d+1)",
+        "detail": "dataset_generation.src.dataset_generation.problemcodeAMDC_opt",
+        "documentation": {}
+    },
+    {
+        "label": "_QUAD_N",
+        "kind": 5,
+        "importPath": "dataset_generation.src.dataset_generation.problemcodeAMDC_opt",
+        "description": "dataset_generation.src.dataset_generation.problemcodeAMDC_opt",
+        "peekOfCode": "_QUAD_N = 100\n_INTGRAL_X = _INTGRAL_W = _INTGRAL_TX = None\n_DIC_X1 = _DIC_W1 = _DIC_X2 = _DIC_W2 = None\n_DIC_W = _DIC_X1_FLAT = _DIC_X2_FLAT = None\n# Cache of Z-dependent effective weights  key: float(Z) → (Q,) array\n_weff_cache: dict = {}\ndef _ensure_intgral_cache():\n    global _INTGRAL_X, _INTGRAL_W, _INTGRAL_TX\n    if _INTGRAL_X is None:\n        _INTGRAL_X, _INTGRAL_W = lgwt(_QUAD_N, 0.0, np.pi / 2)",
+        "detail": "dataset_generation.src.dataset_generation.problemcodeAMDC_opt",
+        "documentation": {}
+    },
+    {
+        "label": "_INTGRAL_X",
+        "kind": 5,
+        "importPath": "dataset_generation.src.dataset_generation.problemcodeAMDC_opt",
+        "description": "dataset_generation.src.dataset_generation.problemcodeAMDC_opt",
+        "peekOfCode": "_INTGRAL_X = _INTGRAL_W = _INTGRAL_TX = None\n_DIC_X1 = _DIC_W1 = _DIC_X2 = _DIC_W2 = None\n_DIC_W = _DIC_X1_FLAT = _DIC_X2_FLAT = None\n# Cache of Z-dependent effective weights  key: float(Z) → (Q,) array\n_weff_cache: dict = {}\ndef _ensure_intgral_cache():\n    global _INTGRAL_X, _INTGRAL_W, _INTGRAL_TX\n    if _INTGRAL_X is None:\n        _INTGRAL_X, _INTGRAL_W = lgwt(_QUAD_N, 0.0, np.pi / 2)\n        _INTGRAL_TX = np.tan(_INTGRAL_X)",
+        "detail": "dataset_generation.src.dataset_generation.problemcodeAMDC_opt",
+        "documentation": {}
+    },
+    {
+        "label": "_DIC_X1",
+        "kind": 5,
+        "importPath": "dataset_generation.src.dataset_generation.problemcodeAMDC_opt",
+        "description": "dataset_generation.src.dataset_generation.problemcodeAMDC_opt",
+        "peekOfCode": "_DIC_X1 = _DIC_W1 = _DIC_X2 = _DIC_W2 = None\n_DIC_W = _DIC_X1_FLAT = _DIC_X2_FLAT = None\n# Cache of Z-dependent effective weights  key: float(Z) → (Q,) array\n_weff_cache: dict = {}\ndef _ensure_intgral_cache():\n    global _INTGRAL_X, _INTGRAL_W, _INTGRAL_TX\n    if _INTGRAL_X is None:\n        _INTGRAL_X, _INTGRAL_W = lgwt(_QUAD_N, 0.0, np.pi / 2)\n        _INTGRAL_TX = np.tan(_INTGRAL_X)\ndef _ensure_dic_cache():",
+        "detail": "dataset_generation.src.dataset_generation.problemcodeAMDC_opt",
+        "documentation": {}
+    },
+    {
+        "label": "_DIC_W",
+        "kind": 5,
+        "importPath": "dataset_generation.src.dataset_generation.problemcodeAMDC_opt",
+        "description": "dataset_generation.src.dataset_generation.problemcodeAMDC_opt",
+        "peekOfCode": "_DIC_W = _DIC_X1_FLAT = _DIC_X2_FLAT = None\n# Cache of Z-dependent effective weights  key: float(Z) → (Q,) array\n_weff_cache: dict = {}\ndef _ensure_intgral_cache():\n    global _INTGRAL_X, _INTGRAL_W, _INTGRAL_TX\n    if _INTGRAL_X is None:\n        _INTGRAL_X, _INTGRAL_W = lgwt(_QUAD_N, 0.0, np.pi / 2)\n        _INTGRAL_TX = np.tan(_INTGRAL_X)\ndef _ensure_dic_cache():\n    global _DIC_X1, _DIC_W1, _DIC_X2, _DIC_W2, _DIC_W, _DIC_X1_FLAT, _DIC_X2_FLAT",
+        "detail": "dataset_generation.src.dataset_generation.problemcodeAMDC_opt",
+        "documentation": {}
+    },
+    {
+        "label": "N",
+        "kind": 5,
+        "importPath": "dataset_generation.tests.test_am",
+        "description": "dataset_generation.tests.test_am",
+        "peekOfCode": "N = 5\nd_val = 0.1\nK = 0.19606\na = 1.0\nb = 1.0\nres = opt.problemcodeAMDC(N, d_val, K, a, b)\nprint(\"Result final:\", res)",
+        "detail": "dataset_generation.tests.test_am",
+        "documentation": {}
+    },
+    {
+        "label": "d_val",
+        "kind": 5,
+        "importPath": "dataset_generation.tests.test_am",
+        "description": "dataset_generation.tests.test_am",
+        "peekOfCode": "d_val = 0.1\nK = 0.19606\na = 1.0\nb = 1.0\nres = opt.problemcodeAMDC(N, d_val, K, a, b)\nprint(\"Result final:\", res)",
+        "detail": "dataset_generation.tests.test_am",
+        "documentation": {}
+    },
+    {
+        "label": "K",
+        "kind": 5,
+        "importPath": "dataset_generation.tests.test_am",
+        "description": "dataset_generation.tests.test_am",
+        "peekOfCode": "K = 0.19606\na = 1.0\nb = 1.0\nres = opt.problemcodeAMDC(N, d_val, K, a, b)\nprint(\"Result final:\", res)",
+        "detail": "dataset_generation.tests.test_am",
+        "documentation": {}
+    },
+    {
+        "label": "a",
+        "kind": 5,
+        "importPath": "dataset_generation.tests.test_am",
+        "description": "dataset_generation.tests.test_am",
+        "peekOfCode": "a = 1.0\nb = 1.0\nres = opt.problemcodeAMDC(N, d_val, K, a, b)\nprint(\"Result final:\", res)",
+        "detail": "dataset_generation.tests.test_am",
+        "documentation": {}
+    },
+    {
+        "label": "b",
+        "kind": 5,
+        "importPath": "dataset_generation.tests.test_am",
+        "description": "dataset_generation.tests.test_am",
+        "peekOfCode": "b = 1.0\nres = opt.problemcodeAMDC(N, d_val, K, a, b)\nprint(\"Result final:\", res)",
+        "detail": "dataset_generation.tests.test_am",
+        "documentation": {}
+    },
+    {
+        "label": "res",
+        "kind": 5,
+        "importPath": "dataset_generation.tests.test_am",
+        "description": "dataset_generation.tests.test_am",
+        "peekOfCode": "res = opt.problemcodeAMDC(N, d_val, K, a, b)\nprint(\"Result final:\", res)",
+        "detail": "dataset_generation.tests.test_am",
+        "documentation": {}
+    },
+    {
+        "label": "res",
+        "kind": 5,
+        "importPath": "dataset_generation.tests.test_am2",
+        "description": "dataset_generation.tests.test_am2",
+        "peekOfCode": "res = opt.problemcodeAMDC(5, 0.1, 0.14597, 1.0, 1.0)\nprint(f\"{res.real * np.pi=}, {res.imag * np.pi=}\")",
+        "detail": "dataset_generation.tests.test_am2",
+        "documentation": {}
+    }
+]

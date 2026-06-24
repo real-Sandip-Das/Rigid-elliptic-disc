@@ -1,5 +1,5 @@
 import numpy as np
-import problemcodeAMDC_opt as opt
+import dataset_generation.problemcodeAMDC_opt as opt
 N = 5
 d_val = 0.1
 K = 0.19606
