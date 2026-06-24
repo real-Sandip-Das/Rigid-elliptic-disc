@@ -7,7 +7,11 @@ authors = [
     { name = "Sandip Das", email = "sd13535@outlook.com" }
 ]
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+    "numpy",
+    "pandas",
+    "torch",
+]
 
 [build-system]
 requires = ["uv_build>=0.11.21,<0.12.0"]
