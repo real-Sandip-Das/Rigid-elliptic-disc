@@ -8,14 +8,20 @@ def evaluate_phi(X_sol, N, s_pts, alpha_pts):
     """
     Evaluates the potential difference [phi] at given points (s, alpha)
     using the series expansion and coefficients X_sol.
+    X_sol can be a single array of shape (size,) or a batch array of shape (..., size).
     """
-    phi_vals = np.zeros_like(s_pts, dtype=np.complex128)
+    # Create an output array with shape matching the batch dims of X_sol + the number of points
+    phi_vals = np.zeros(X_sol.shape[:-1] + s_pts.shape, dtype=np.complex128)
     q_idx = 0
     for k in range(N + 1):
         for m in range(N + 1):
             p1 = opt.alform(k, m, s_pts)
             p2 = np.cos(m * alpha_pts)
-            phi_vals += X_sol[q_idx] * p1 * p2
+            
+            # Extract the q_idx coefficient for all batch dimensions
+            coeff = X_sol[..., q_idx]
+            # Add a new axis to coeff to broadcast against the points array
+            phi_vals += coeff[..., np.newaxis] * (p1 * p2)
             q_idx += 1
     return phi_vals
 
@@ -39,13 +45,20 @@ def generate_symmetric_points(N_s=3, N_alpha=8):
     return np.array(s_pts), np.array(alpha_pts)
 
 def main():
-    # Grid of parameters to sample
-    a_b_list = [1.0, 1.25, 1.5, 1.75, 2.0]
-    d_b_list = [0.1, 0.2, 0.3, 0.4]
-    K_list = np.linspace(0.5, 2.0, 4)  # Non-dimensional wave number K
-    
     N = 5 # Truncation order
     b = 1.0 # Keep semi-minor axis at 1 for non-dimensionalization
+    
+    # Sweep parameters corresponding to previous list:
+    # a_b_list = [1.0, 1.25, 1.5, 1.75, 2.0]
+    a0, a1, n_a = 1.0, 2.0, 4
+    # d_b_list = [0.1, 0.2, 0.3, 0.4]
+    d0, d1, n_d = 0.1, 0.4, 3
+    # K_list = [0.5, 1.0, 1.5, 2.0]
+    k0_val, k1_val, n_k = 0.5, 2.0, 3
+    
+    a_vals = np.linspace(a0, a1, n_a + 1)
+    d_vals = np.linspace(d0, d1, n_d + 1)
+    K_vals = np.linspace(k0_val, k1_val, n_k + 1)
     
     # Generate points
     s_pts, alpha_pts = generate_symmetric_points(N_s=3, N_alpha=8)
@@ -59,25 +72,33 @@ def main():
     
     filename = 'dataset.csv'
     
+    print("Starting batched sweep computation...")
+    t0 = time.time()
+    final_sweep, X_sol_sweep = opt.sweep_problemcodeAMDC(
+        a0, a1, n_a, d0, d1, n_d, k0_val, k1_val, n_k, N=N, b=b
+    )
+    print(f"Sweep completed in {time.time()-t0:.2f}s")
+    
+    print("Evaluating phi for all configurations...")
+    t0 = time.time()
+    # Vectorized evaluation of phi for all configurations simultaneously
+    phi_sweep = evaluate_phi(X_sol_sweep, N, s_pts, alpha_pts)
+    print(f"Phi evaluation completed in {time.time()-t0:.2f}s")
+    
+    print("Writing to CSV...")
     with open(filename, 'w', newline='') as f:
         writer = csv.writer(f)
         writer.writerow(header)
         
-        for a_b in a_b_list:
-            for d_b in d_b_list:
-                for K in K_list:
-                    print(f"Running a/b={a_b:.2f}, d/b={d_b:.2f}, K={K:.2f}...")
-                    t0 = time.time()
+        for i_a, a_b in enumerate(a_vals):
+            for i_d, d_b in enumerate(d_vals):
+                for i_K, K in enumerate(K_vals):
+                    final = final_sweep[i_a, i_d, i_K]
                     
-                    # problemcodeAMDC returns (final, X_sol)
-                    final, X_sol = opt.problemcodeAMDC(N, d_b, K, a_b, b)
-                    
-                    # Convert 'final' to dimensional-less Added Mass & Damping Coeff
                     added_mass = np.real(np.pi * final * a_b)
                     damping = np.imag(np.pi * final * a_b)
                     
-                    # Evaluate the potential phi at the generated points
-                    phi_vals = evaluate_phi(X_sol, N, s_pts, alpha_pts)
+                    phi_vals = phi_sweep[i_a, i_d, i_K]
                     
                     row = [a_b, d_b, K]
                     for phi in phi_vals:
@@ -86,8 +107,8 @@ def main():
                     row.extend([added_mass, damping])
                     
                     writer.writerow(row)
-                    f.flush()
-                    print(f"  -> Done in {time.time()-t0:.2f}s")
+                    
+    print(f"Dataset successfully written to {filename}")
                     
 if __name__ == '__main__':
     # Limit default threads if user wants so solver doesn't overload

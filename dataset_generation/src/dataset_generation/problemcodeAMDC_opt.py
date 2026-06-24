@@ -614,6 +614,7 @@ def sweep_problemcodeAMDC(
           f"({n_expensive} k0 calls, {n_d1} d-values batched per call) ...")
 
     results = np.zeros((n_a1, n_d1, n_k1), dtype=complex)
+    X_results = np.zeros((n_a1, n_d1, n_k1, size), dtype=complex)
 
     # Pre-allocate large buffers shared across iterations (avoids repeated
     # 288 MB alloc/free for k0_base and 255 MB for denom2 on every k0 call)
@@ -672,6 +673,7 @@ def sweep_problemcodeAMDC(
             del c_real, c_J
 
             X_all = np.linalg.solve(A_a[None] + c_all, f_batch)[..., 0]
+            X_results[i_a, :, i_K, :] = X_all
             del c_all
 
             sum1_all = (X_all @ OP_rows).reshape(n_d1, Q, Q)
@@ -679,7 +681,7 @@ def sweep_problemcodeAMDC(
                 -np.einsum('dij,ij->d', sum1_all, w_quad) / np.pi
             )
 
-    return results
+    return results, X_results
 
 
 # ----------------------------------------------------------------------
