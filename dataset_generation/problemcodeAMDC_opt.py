@@ -477,7 +477,8 @@ def problemcodeAMDC(N, d_val, K, a, b):
     # ── Phase 6 ──────────────────────────────────────────────────────
     sum1  = (OP_rows.T @ X_sol).reshape((_QUAD_N, _QUAD_N))
     _, w1 = lgwt(_QUAD_N, 0, 1);  _, w2 = lgwt(_QUAD_N, 0, 2*np.pi)
-    return -np.sum(np.outer(w1,w2) * sum1) / np.pi
+    final = -np.sum(np.outer(w1,w2) * sum1) / np.pi
+    return final, X_sol
 
 
 # ──────────────────────────────────────────────────────────────────────
