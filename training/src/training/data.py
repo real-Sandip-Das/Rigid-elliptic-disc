@@ -31,9 +31,21 @@ class WaveDataset(Dataset):
             torch.tensor(self.coeffs[idx], dtype=torch.float32)
         )
 
-def get_dataloader(csv_file, batch_size, shuffle=True):
+def get_dataloaders(csv_file, batch_size, val_split=0.2, seed=42):
     dataset = WaveDataset(csv_file)
-    return DataLoader(dataset, batch_size=batch_size, shuffle=shuffle)
+    
+    val_size = int(len(dataset) * val_split)
+    train_size = len(dataset) - val_size
+    
+    generator = torch.Generator().manual_seed(seed)
+    train_dataset, val_dataset = torch.utils.data.random_split(
+        dataset, [train_size, val_size], generator=generator
+    )
+    
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+    val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
+    
+    return train_loader, val_loader
 
 def compute_8_features(x, y, z):
     """Helper to convert cartesian to your custom Fourier spatial features."""
