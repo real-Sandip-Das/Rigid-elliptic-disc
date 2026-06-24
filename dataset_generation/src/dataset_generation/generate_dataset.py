@@ -44,18 +44,7 @@ def generate_symmetric_points(N_s=3, N_alpha=8):
             
     return np.array(s_pts), np.array(alpha_pts)
 
-def main():
-    N = 5 # Truncation order
-    b = 1.0 # Keep semi-minor axis at 1 for non-dimensionalization
-    
-    # Sweep parameters corresponding to previous list:
-    # a_b_list = [1.0, 1.25, 1.5, 1.75, 2.0]
-    a0, a1, n_a = 1.0, 2.0, 4
-    # d_b_list = [0.1, 0.2, 0.3, 0.4]
-    d0, d1, n_d = 0.1, 0.4, 3
-    # K_list = [0.5, 1.0, 1.5, 2.0]
-    k0_val, k1_val, n_k = 0.5, 2.0, 3
-    
+def generate_dataset(a0, a1, n_a, d0, d1, n_d, k0_val, k1_val, n_k, filename='dataset.csv', N=5, b=1.0):
     a_vals = np.linspace(a0, a1, n_a + 1)
     d_vals = np.linspace(d0, d1, n_d + 1)
     K_vals = np.linspace(k0_val, k1_val, n_k + 1)
@@ -69,8 +58,7 @@ def main():
         header.append(f'phi_real_{i}')
         header.append(f'phi_imag_{i}')
     header.extend(['Added_Mass', 'Damping_Coefficient'])
-    
-    filename = 'dataset.csv'
+
     
     print("Starting batched sweep computation...")
     t0 = time.time()
@@ -114,4 +102,10 @@ def main():
 if __name__ == '__main__':
     # Limit default threads if user wants so solver doesn't overload
     opt._N_THREADS = max(1, os.cpu_count() // 2)
-    main()
+    # Generate the small sample dataset by default
+    generate_dataset(
+        a0=1.0, a1=2.0, n_a=4,
+        d0=0.1, d1=0.4, n_d=3,
+        k0_val=0.5, k1_val=2.0, n_k=3,
+        filename='dataset.csv'
+    )

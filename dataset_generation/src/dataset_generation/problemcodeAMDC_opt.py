@@ -578,6 +578,7 @@ def sweep_problemcodeAMDC(
     denom_flat = np.sqrt(1.0 - R_flat**2)
 
     km_pairs = [(k, m) for k in range(N+1) for m in range(N+1)]
+    
     f_batch  = (4.0 * np.pi * np.ones(size, dtype=np.complex128)
                 )[np.newaxis, :, np.newaxis]
 
