@@ -1,9 +1,11 @@
 import math
 import time
+import os
 
 import numpy as np
 import torch
 import torch.nn as nn
+from huggingface_hub import snapshot_download, HfApi
 
 from training.model import DeepONetWaveSurrogate
 from training.data import get_dataloaders
@@ -254,13 +256,13 @@ def train_phase1(config):
     print(f"Phase 1 on {device}  |  every epoch = data+physics")
 
     # Pull config fields with backward-compatible defaults
-    w_pde_init    = getattr(config, 'w_pde',                 0.10)
-    w_sob_init    = getattr(config, 'w_sob',                 0.01)
-    sob_decay     = getattr(config, 'sob_decay',             0.999)
+    w_pde_init    = getattr(config, 'w_pde',                 1e-4)
+    w_sob_init    = getattr(config, 'w_sob_init',            1e-6)
+    w_sob_max     = getattr(config, 'w_sob_max',             1e-4)
+    sob_growth    = getattr(config, 'sob_growth',            1.01)
 
     use_sobol     = getattr(config, 'use_sobol',             True)
-    lbfgs_start   = getattr(config, 'lbfgs_start_epoch',     4000)
-    lbfgs_maxiter = getattr(config, 'lbfgs_max_iter',          20)
+    lbfgs_maxiter = getattr(config, 'lbfgs_max_iter',          50)
     lbfgs_maxeval = getattr(config, 'lbfgs_max_eval',          25)
     use_compile   = getattr(config, 'use_compile',           True)
     log_every     = getattr(config, 'log_every',              100)
@@ -292,11 +294,20 @@ def train_phase1(config):
         sobol_data = None
 
     # ── Optimizer setup ───────────────────────────────────────────────────
-    # We start with Adam and switch to L-BFGS at `lbfgs_start`.
+    # We start with Adam and switch to L-BFGS automatically when LR drops.
     optimizer = torch.optim.Adam(
         filter(lambda p: p.requires_grad, model.parameters()),
         lr=config.p1_lr,
     )
+    
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+        optimizer,
+        mode='min',
+        factor=0.1,
+        patience=5,
+        min_lr=1e-7
+    )
+    
     using_lbfgs = False   # flag to track current optimizer
 
     def make_lbfgs():
@@ -310,22 +321,77 @@ def train_phase1(config):
 
     mse_loss = nn.MSELoss()
 
-    for epoch in range(1, config.p1_epochs + 1):
+    start_epoch = 1
+
+    # ── Hugging Face Hub Integration (Init/Resume) ────────────────────────
+    hf_repo_id = getattr(config, 'hf_repo_id', "")
+    hf_checkpoint_file = getattr(config, 'hf_checkpoint_file', "phase1_training_state.pt")
+    hf_force_initialize = getattr(config, 'hf_force_initialize', False)
+    hf_sync_every = getattr(config, 'hf_sync_every', 0)
+    checkpoint_loaded = False
+
+    api = None
+    if hf_repo_id:
+        api = HfApi()
+        
+        # Ensure remote repo exists
+        try:
+            api.create_repo(repo_id=hf_repo_id, exist_ok=True)
+        except Exception as e:
+            print(f"Warning: Could not verify/create remote repository: {e}")
+            
+        if not hf_force_initialize:
+            try:
+                if api.repo_info(repo_id=hf_repo_id):
+                    print(f"Pulling latest checkpoint from Hugging Face Hub ({hf_repo_id})...")
+                    snapshot_download(
+                        repo_id=hf_repo_id,
+                        local_dir=config.checkpoint_dir,
+                        allow_patterns=[hf_checkpoint_file]
+                    )
+                    
+                    checkpoint_path = os.path.join(config.checkpoint_dir, hf_checkpoint_file)
+                    if os.path.exists(checkpoint_path):
+                        checkpoint = torch.load(checkpoint_path, map_location=device)
+                        model.load_state_dict(checkpoint['model_state_dict'])
+                        using_lbfgs = checkpoint.get('using_lbfgs', False)
+                        
+                        if using_lbfgs:
+                            optimizer = make_lbfgs()
+                        
+                        optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+                        
+                        if 'scheduler_state_dict' in checkpoint and checkpoint['scheduler_state_dict'] is not None and not using_lbfgs:
+                            scheduler.load_state_dict(checkpoint['scheduler_state_dict'])
+                            
+                        start_epoch = checkpoint['epoch'] + 1
+                        checkpoint_loaded = True
+                        print(f"Successfully resumed from Hub. Starting from epoch {start_epoch}")
+                    else:
+                        print("Repository found, but no checkpoint file existed yet.")
+            except Exception as e:
+                print(f"Could not pull from Hub ({str(e)}). Falling back to initialization.")
+
+    if hf_repo_id and not checkpoint_loaded:
+        print("Initializing model and optimizer from scratch (or force initialized).")
+
+    for epoch in range(start_epoch, config.p1_epochs + 1):
         t0 = time.time()
 
-        # ── Sobolev weight annealing ──────────────────────────────────────
-        # Decays w_sob by sob_decay each epoch.  Early in training the large
-        # w_sob suppresses rough latent representations; later it steps back
-        # to let the PDE residual dominate.
-        w_sob_epoch = w_sob_init * (sob_decay ** (epoch - 1))
+        # ── Sobolev weight scheduling ──────────────────────────────────────
+        # Starts small for a better initial loss landscape, then slowly
+        # increases to enforce smoothness once a good approximation is found.
+        w_sob_epoch = min(w_sob_max, w_sob_init * (sob_growth ** (epoch - 1)))
         w_pde       = w_pde_init
 
         # ── Optimizer curriculum: Adam → L-BFGS ──────────────────────────
-        if epoch == lbfgs_start and not using_lbfgs:
-            print(f"\n[Epoch {epoch}] Switching optimizer: Adam → L-BFGS "
-                  f"(max_iter={lbfgs_maxiter}, strong_wolfe line search)")
-            optimizer   = make_lbfgs()
-            using_lbfgs = True
+        if not using_lbfgs:
+            current_lr = optimizer.param_groups[0]['lr']
+            if current_lr <= 1.5e-7:
+                print(f"\n[Epoch {epoch}] Learning rate reached {current_lr:.2e}. Switching optimizer: Adam → L-BFGS "
+                      f"(max_iter={lbfgs_maxiter}, strong_wolfe line search)")
+                optimizer   = make_lbfgs()
+                using_lbfgs = True
 
         # ── Reset Sobol engine each epoch so colloc pts vary per epoch ────
         if use_sobol:
@@ -436,8 +502,12 @@ def train_phase1(config):
 
             n_batches += 1
 
+        avg = total_loss / max(n_batches, 1)
+        
+        if not using_lbfgs:
+            scheduler.step(avg)
+
         if epoch % log_every == 0:
-            avg = total_loss / max(n_batches, 1)
             opt_tag = "L-BFGS" if using_lbfgs else "Adam"
             epoch_time = time.time() - t0
             print(
@@ -471,6 +541,43 @@ def train_phase1(config):
             val_loss_avg = total_val_data_loss / max(1, len(val_loader))
             print(f"Epoch {epoch:5d}/{config.p1_epochs}  [validation]  Val Data Loss: {val_loss_avg:.6f}")
 
+        # ── Mid-training Hugging Face Sync ────────────────────────────────────
+        if hf_repo_id and hf_sync_every > 0 and epoch % hf_sync_every == 0:
+            save_path = os.path.join(config.checkpoint_dir, hf_checkpoint_file)
+            torch.save({
+                'epoch': epoch,
+                'model_state_dict': model.state_dict(),
+                'optimizer_state_dict': optimizer.state_dict(),
+                'scheduler_state_dict': scheduler.state_dict() if not using_lbfgs else None,
+                'using_lbfgs': using_lbfgs
+            }, save_path)
+            
+            print(f"Syncing epoch {epoch} checkpoint to Hub ({hf_repo_id})...")
+            api.upload_folder(
+                folder_path=config.checkpoint_dir,
+                repo_id=hf_repo_id,
+                commit_message=f"Checkpoint sync: Epoch {epoch}"
+            )
 
     torch.save(model.state_dict(), config.phase1_model_path)
     print(f"Phase 1 complete. Model saved → {config.phase1_model_path}")
+
+    # ── Post-Training: Save and Upload Final State ───────────────────────────
+    if hf_repo_id:
+        print("Training finished. Preparing final storage upload to Hugging Face Hub...")
+        final_save_path = os.path.join(config.checkpoint_dir, hf_checkpoint_file)
+        torch.save({
+            'epoch': config.p1_epochs,
+            'model_state_dict': model.state_dict(),
+            'optimizer_state_dict': optimizer.state_dict(),
+            'scheduler_state_dict': scheduler.state_dict() if not using_lbfgs else None,
+            'using_lbfgs': using_lbfgs,
+            'status': 'completed'
+        }, final_save_path)
+        
+        api.upload_folder(
+            folder_path=config.checkpoint_dir,
+            repo_id=hf_repo_id,
+            commit_message="Training complete: Final model state stored."
+        )
+        print("Final checkpoint successfully stored on Hugging Face Hub!")

@@ -12,7 +12,7 @@ class WaveConfig:
     phase2_model_path: str = os.path.join(checkpoint_dir, "phase2_final.pth")
 
     # Architecture
-    latent_dim: int = 16
+    latent_dim: int = 32
 
     # Phase 1: PINN Training (Branch + Trunk)
     p1_batch_size: int = 32
@@ -21,17 +21,17 @@ class WaveConfig:
     colloc_points_per_batch: int = 2000
 
     # Phase 1: PDE / Sobolev loss weights
-    w_pde: float = 0.10              # PDE residual loss weight
-    w_sob: float = 0.01              # Sobolev (∇(∇²φ)) loss weight
-    sob_decay: float = 0.999         # Multiplicative decay applied to w_sob each epoch
+    w_pde: float = 1e-4              # PDE residual loss weight
+    w_sob_init: float = 1e-6         # Initial Sobolev (∇(∇²φ)) loss weight
+    w_sob_max: float = 1e-4          # Maximum Sobolev loss weight
+    sob_growth: float = 1.01         # Multiplicative growth applied to w_sob each epoch
 
 
     # Phase 1: Sobol quasi-random sampling
     use_sobol: bool = True            # Replace uniform random with Sobol sequences
 
     # Phase 1: Optimizer curriculum (Adam → L-BFGS)
-    lbfgs_start_epoch: int = 4000     # Switch from Adam to L-BFGS at this epoch
-    lbfgs_max_iter: int = 20          # max_iter per L-BFGS step() call
+    lbfgs_max_iter: int = 50          # Max iterations per L-BFGS step() call
     lbfgs_max_eval: int = 25          # max_eval per L-BFGS step() call
 
     # Phase 1: torch.compile acceleration (PyTorch >= 2.0)
@@ -39,6 +39,12 @@ class WaveConfig:
 
     # Logging
     log_every: int = 100             # Print summary every N epochs
+
+    # Hugging Face Integration
+    hf_repo_id: str = ""             # If provided, enables HF Hub synchronization
+    hf_checkpoint_file: str = "phase1_training_state.pt" # Name of checkpoint file
+    hf_force_initialize: bool = False # If True, bypasses pulling from Hub
+    hf_sync_every: int = 0           # Syncs to Hub every N epochs (if > 0)
 
     # Phase 2: Coefficient Training (MLP Head)
     p2_batch_size: int = 64
