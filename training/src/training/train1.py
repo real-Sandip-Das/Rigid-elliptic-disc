@@ -302,7 +302,7 @@ def train_phase1(config):
     def make_lbfgs():
         return torch.optim.LBFGS(
             filter(lambda p: p.requires_grad, model.parameters()),
-            lr=1.0,
+            lr=0.1,  # Lowered from 1.0 to prevent aggressive steps causing NaNs
             max_iter=lbfgs_maxiter,
             max_eval=lbfgs_maxeval,
             line_search_fn='strong_wolfe',
@@ -382,6 +382,12 @@ def train_phase1(config):
                     _loss_sob  = compute_sobolev_loss(_laplace_r, _laplace_i, x, y, z)
 
                     _loss = _loss_data + w_pde * _loss_pde + w_sob_epoch * _loss_sob
+                    
+                    if not torch.isfinite(_loss):
+                        # Force line search to shrink step size and reject this step
+                        optimizer.zero_grad()
+                        return torch.tensor(float('inf'), device=_loss.device)
+
                     _loss.backward()
                     torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
                     return _loss
