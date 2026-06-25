@@ -1,3 +1,4 @@
+import time
 import torch
 import torch.nn.functional as F
 from training.model import DeepONetWaveSurrogate
@@ -17,6 +18,7 @@ def train_phase2(config):
     optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), lr=config.p2_lr)
 
     for epoch in range(1, config.p2_epochs + 1):
+        t0 = time.time()
         model.train()
         total_train_loss = 0.0
         
@@ -31,7 +33,7 @@ def train_phase2(config):
             optimizer.step()
             total_train_loss += loss.item()
             
-        if epoch % 10 == 0:
+        if epoch % 100 == 0:
             model.eval()
             total_val_loss = 0.0
             with torch.no_grad():
@@ -41,7 +43,8 @@ def train_phase2(config):
                     loss = F.mse_loss(pred_coeffs, true_coeffs)
                     total_val_loss += loss.item()
             
-            print(f"Epoch {epoch}/{config.p2_epochs} | Train Loss: {total_train_loss/len(train_loader):.6f} | Val Loss: {total_val_loss/max(1, len(val_loader)):.6f}")
+            epoch_time = time.time() - t0
+            print(f"Epoch {epoch}/{config.p2_epochs} | Train Loss: {total_train_loss/len(train_loader):.6f} | Val Loss: {total_val_loss/max(1, len(val_loader)):.6f} | time: {epoch_time:.2f}s")
 
     torch.save(model.state_dict(), config.phase2_model_path)
     print(f"Phase 2 complete. Model saved to {config.phase2_model_path}")

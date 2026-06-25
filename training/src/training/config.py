@@ -25,8 +25,6 @@ class WaveConfig:
     w_sob: float = 0.01              # Sobolev (∇(∇²φ)) loss weight
     sob_decay: float = 0.999         # Multiplicative decay applied to w_sob each epoch
 
-    # Phase 1: Physics-only epoch settings
-    physics_colloc_points: int = 100  # Random colloc pts per sample in physics-only epochs
 
     # Phase 1: Sobol quasi-random sampling
     use_sobol: bool = True            # Replace uniform random with Sobol sequences

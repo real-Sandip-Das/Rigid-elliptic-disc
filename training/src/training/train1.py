@@ -1,4 +1,5 @@
 import math
+import time
 
 import numpy as np
 import torch
@@ -108,55 +109,39 @@ def generate_colloc_coords(a_b, d_b, num_points, device, sobol_sampler=None):
     """
     `num_points` collocation points — NO anchor points.
 
-    Used in PHYSICS-ONLY epochs.  We never compute data loss here so the
-    fixed anchor locations are irrelevant; Sobol sampling gives better
-    coverage of the residual landscape with lower variance.
+    Used in PHYSICS-ONLY epochs.  All points are sampled uniformly inside
+    the elliptic disc footprint: (x/a_b)² + y² ≤ 1, at the fixed disc
+    plane depth z = -d_b (no z sampling).
+
+    Uniform area sampling over an ellipse requires the sqrt-transform:
+        u ~ Uniform[0, 1)  →  r = √u
+    so that the density is uniform over the disc area (otherwise points
+    cluster near the centre with a naive uniform-r draw).
+
+    Sobol sequences give better low-discrepancy coverage than uniform random,
+    which reduces variance of the 3rd-order Sobolev loss estimate.
 
     Returns x, y, z of shape [B, num_points], each a leaf with requires_grad=True.
     """
     batch_size = a_b.shape[0]
 
     if sobol_sampler is not None:
-        raw    = sobol_sampler.draw(num_points)                    # [P, 3]
-        s_rand     = raw[:, 0].unsqueeze(0).expand(batch_size, -1) * 3.0
+        raw        = sobol_sampler.draw(num_points)                          # [P, 2] — only 2 dims now
+        # dim 0: u ∈ [0,1) → r = √u for uniform disc-area distribution
+        r_frac     = raw[:, 0].sqrt().unsqueeze(0).expand(batch_size, -1)    # [B, P]
         alpha_rand = raw[:, 1].unsqueeze(0).expand(batch_size, -1) * 2 * math.pi
-        z_frac     = raw[:, 2].unsqueeze(0).expand(batch_size, -1)
     else:
-        s_rand     = torch.rand((batch_size, num_points), device=device) * 3.0
+        u_rand     = torch.rand((batch_size, num_points), device=device)
+        r_frac     = u_rand.sqrt()                                            # uniform over disc area
         alpha_rand = torch.rand((batch_size, num_points), device=device) * 2 * math.pi
-        z_frac     = torch.rand((batch_size, num_points), device=device)
 
-    z_rand = -d_b.unsqueeze(1) * z_frac
-
-    # Each result is computed from non-grad inputs → becomes a leaf after
-    # requires_grad_(True), so autograd roots the graph here.
-    x = (a_b.unsqueeze(1) * s_rand * torch.cos(alpha_rand)).requires_grad_(True)
-    y = (            1.0  * s_rand * torch.sin(alpha_rand)).requires_grad_(True)
-    z = z_rand.requires_grad_(True)
+    # x, y lie on/inside the ellipse with semi-axes (a_b, 1.0)
+    # z is fixed at the disc plane depth (-d_b) — not sampled
+    x = (a_b.unsqueeze(1) * r_frac * torch.cos(alpha_rand)).requires_grad_(True)
+    y = (            1.0  * r_frac * torch.sin(alpha_rand)).requires_grad_(True)
+    z = (-d_b.unsqueeze(1).expand(batch_size, num_points).clone()).requires_grad_(True)
 
     return x, y, z
-
-
-# ============================================================
-# Feature engineering
-# ============================================================
-
-def compute_7_features(x, y, z):
-    """
-    (x, y, z) of shape [B, P]  →  [B, P, 7] cylindrical Fourier features.
-
-    eps in r prevents NaN in ∂(cos θ)/∂x and ∂(sin θ)/∂y at the origin.
-    The computation graph flows through here, so gradients of φ w.r.t.
-    x, y, z propagate correctly through these features.
-    """
-    r     = torch.sqrt(x ** 2 + y ** 2 + 1e-8)
-    cos_t = x / r
-    sin_t = y / r
-
-    return torch.stack(
-        [r, cos_t, sin_t, z, torch.sin(z), torch.sin(2 * z), torch.sin(3 * z)],
-        dim=-1,
-    )   # [B, P, 7]
 
 
 # ============================================================
@@ -186,6 +171,16 @@ def calc_laplace(phi, x, y, z):
         return d2
 
     return second_deriv(phi, x) + second_deriv(phi, y) + second_deriv(phi, z)
+
+
+def calc_dz(phi, z):
+    """Computes ∂φ/∂z."""
+    return torch.autograd.grad(
+        phi, z,
+        grad_outputs=torch.ones_like(phi),
+        create_graph=True,
+        retain_graph=True,
+    )[0]
 
 
 def compute_sobolev_loss(laplace_r, laplace_i, x, y, z):
@@ -243,17 +238,11 @@ def train_phase1(config):
         • Gradients flow to both branch and trunk.
         • Caches each batch's (latent, a_b, d_b) for the next physics epoch.
 
-      Even epochs (2, 4, 6, …) — PHYSICS ONLY
-        • Branch is SKIPPED — cached latents from the previous data epoch are reused.
-        • Fresh random/Sobol collocation points are drawn (no anchors needed).
-        • Loss = PDE loss + Sobolev loss only (no data loss).
-        • Gradients flow to trunk and biases ONLY (branch is frozen by detachment).
 
     Config fields (all have defaults in WaveConfig):
         config.w_pde                 = 0.10   — PDE residual loss weight
         config.w_sob                 = 0.01   — initial Sobolev loss weight
         config.sob_decay             = 0.999  — per-epoch w_sob decay factor
-        config.physics_colloc_points = 100    — random pts per sample in physics epoch
         config.use_sobol             = True   — use Sobol quasi-random sampling
         config.lbfgs_start_epoch     = 4000   — switch to L-BFGS at this epoch
         config.lbfgs_max_iter        = 20     — L-BFGS max_iter per step()
@@ -262,13 +251,13 @@ def train_phase1(config):
         config.log_every             = 100    — print every N epochs
     """
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    print(f"Phase 1 on {device}  |  odd epochs = data+physics, even epochs = physics-only")
+    print(f"Phase 1 on {device}  |  every epoch = data+physics")
 
     # Pull config fields with backward-compatible defaults
     w_pde_init    = getattr(config, 'w_pde',                 0.10)
     w_sob_init    = getattr(config, 'w_sob',                 0.01)
     sob_decay     = getattr(config, 'sob_decay',             0.999)
-    physics_n_pts = getattr(config, 'physics_colloc_points',  100)
+
     use_sobol     = getattr(config, 'use_sobol',             True)
     lbfgs_start   = getattr(config, 'lbfgs_start_epoch',     4000)
     lbfgs_maxiter = getattr(config, 'lbfgs_max_iter',          20)
@@ -293,17 +282,14 @@ def train_phase1(config):
     else:
         print("torch.compile: disabled (requires PyTorch >= 2.0)")
 
-    # ── Sobol samplers ────────────────────────────────────────────────────
+    # ── Sobol sampler ─────────────────────────────────────────────────────
     # Dimension 3: (s, alpha, z_fraction) for each collocation draw.
-    # Separate engines for data epochs and physics epochs so their sequences
-    # do not interfere.
     if use_sobol:
         print(f"Sobol quasi-random sampling: enabled")
-        sobol_data   = SobolSampler(dimension=3, scramble=True,  device=device)
-        sobol_phys   = SobolSampler(dimension=3, scramble=True,  device=device)
+        sobol_data = SobolSampler(dimension=3, scramble=True, device=device)
     else:
         print("Sobol quasi-random sampling: disabled (using uniform random)")
-        sobol_data = sobol_phys = None
+        sobol_data = None
 
     # ── Optimizer setup ───────────────────────────────────────────────────
     # We start with Adam and switch to L-BFGS at `lbfgs_start`.
@@ -324,15 +310,8 @@ def train_phase1(config):
 
     mse_loss = nn.MSELoss()
 
-    # ─────────────────────────────────────────────────────────────────────
-    # Latent cache
-    #   Populated at the end of every data epoch.
-    #   Each entry: (latent [B, D], a_b [B], d_b [B]) — all detached.
-    #   Consumed (read-only) during the following physics epoch.
-    # ─────────────────────────────────────────────────────────────────────
-    latent_cache: list[tuple[torch.Tensor, torch.Tensor, torch.Tensor]] = []
-
     for epoch in range(1, config.p1_epochs + 1):
+        t0 = time.time()
 
         # ── Sobolev weight annealing ──────────────────────────────────────
         # Decays w_sob by sob_decay each epoch.  Early in training the large
@@ -348,199 +327,120 @@ def train_phase1(config):
             optimizer   = make_lbfgs()
             using_lbfgs = True
 
-        # ── Reset Sobol engines each epoch so colloc pts vary per epoch ───
+        # ── Reset Sobol engine each epoch so colloc pts vary per epoch ────
         if use_sobol:
             sobol_data.reset()
-            sobol_phys.reset()
 
-        is_data_epoch = (epoch % 2 == 1)
-        total_loss    = 0.0
-        n_batches     = 0
+        total_loss = 0.0
+        n_batches  = 0
 
-        # ============================================================
-        if is_data_epoch:
-        # ============================================================
-            latent_cache = []   # rebuild cache fresh every data epoch
+        for batch in train_loader:
+            wave_params, phi_r_true, phi_i_true, _ = [b.to(device) for b in batch]
+            a_b = wave_params[:, 0]
+            d_b = wave_params[:, 1]
 
-            for batch in train_loader:
-                wave_params, phi_r_true, phi_i_true, _ = [b.to(device) for b in batch]
-                a_b = wave_params[:, 0]
-                d_b = wave_params[:, 1]
+            # --- Spatial coordinates ---
+            x, y, z  = generate_data_and_colloc_coords(
+                a_b, d_b, config.colloc_points_per_batch, device,
+                sobol_sampler=sobol_data,
+            )
 
-                # --- Spatial coordinates & features ---
-                x, y, z  = generate_data_and_colloc_coords(
-                    a_b, d_b, config.colloc_points_per_batch, device,
-                    sobol_sampler=sobol_data,
-                )
-                features = compute_7_features(x, y, z)     # [B, 25+P, 7]
+            if using_lbfgs:
+                # ── L-BFGS path: requires a closure ──────────────────────
+                # x, y, z are fixed leaf tensors (same coords for all
+                # line-search evaluations — correct L-BFGS behaviour).
+                # features, phi and laplacian MUST be recomputed inside
+                # the closure because backward() frees saved tensors after
+                # the first call; a second call would hit a graph error.
+                # We also zero x/y/z grads each call so they don't
+                # accumulate across line-search steps (harmless but clean).
 
-                if using_lbfgs:
-                    # ── L-BFGS path: requires a closure ──────────────────
-                    # x, y, z are fixed leaf tensors (same coords for all
-                    # line-search evaluations — correct L-BFGS behaviour).
-                    # features, phi and laplacian MUST be recomputed inside
-                    # the closure because backward() frees saved tensors after
-                    # the first call; a second call would hit a graph error.
-                    # We also zero x/y/z grads each call so they don't
-                    # accumulate across line-search steps (harmless but clean).
-                    with torch.no_grad():
-                        latent_for_cache = model.encode(wave_params)
-                    latent_cache.append((
-                        latent_for_cache.detach().clone(),
-                        a_b.detach().clone(),
-                        d_b.detach().clone(),
-                    ))
-
-                    def closure():
-                        optimizer.zero_grad()
-                        for _t in (x, y, z):
-                            if _t.grad is not None:
-                                _t.grad.zero_()
-                        # Rebuild full graph from fixed x, y, z each call
-                        _features = compute_7_features(x, y, z)
-                        _latent = model.encode(wave_params)
-                        phi_r_pred, phi_i_pred = model.forward_trunk_only(_latent, _features)
-
-                        _loss_data = (
-                            mse_loss(phi_r_pred[:, :25], phi_r_true)
-                            + mse_loss(phi_i_pred[:, :25], phi_i_true)
-                        )
-                        _laplace_r = calc_laplace(phi_r_pred, x, y, z)
-                        _laplace_i = calc_laplace(phi_i_pred, x, y, z)
-                        _loss_pde  = _laplace_r.pow(2).mean() + _laplace_i.pow(2).mean()
-                        _loss_sob  = compute_sobolev_loss(_laplace_r, _laplace_i, x, y, z)
-
-                        _loss = _loss_data + w_pde * _loss_pde + w_sob_epoch * _loss_sob
-                        _loss.backward()
-                        torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
-                        return _loss
-
-                    loss_val = optimizer.step(closure)
-                    total_loss += loss_val.item() if loss_val is not None else 0.0
-
-                else:
-                    # ── Adam path ─────────────────────────────────────────
+                def closure():
                     optimizer.zero_grad()
+                    for _t in (x, y, z):
+                        if _t.grad is not None:
+                            _t.grad.zero_()
+                    # Rebuild full graph from fixed x, y, z each call
+                    _latent = model.encode(wave_params)
+                    phi_r_pred, phi_i_pred = model.forward_trunk_only(_latent, x, y, z, a_b, d_b)
 
-                    # Branch (gradient live → branch params updated)
-                    latent = model.encode(wave_params)          # [B, latent_dim]
-
-                    # Cache a detached copy so the physics epoch can skip branch
-                    latent_cache.append((
-                        latent.detach().clone(),
-                        a_b.detach().clone(),
-                        d_b.detach().clone(),
-                    ))
-
-                    # Trunk (gradient live → trunk params updated)
-                    phi_r_pred, phi_i_pred = model.forward_trunk_only(latent, features)
-
-                    # Data loss: anchor points only
-                    loss_data = (
+                    _loss_data = (
                         mse_loss(phi_r_pred[:, :25], phi_r_true)
                         + mse_loss(phi_i_pred[:, :25], phi_i_true)
                     )
+                    _laplace_r = calc_laplace(phi_r_pred, x, y, z)
+                    _laplace_i = calc_laplace(phi_i_pred, x, y, z)
+                    _loss_pde  = _laplace_r.pow(2).mean() + _laplace_i.pow(2).mean()
 
-                    # PDE loss: all points
-                    laplace_r = calc_laplace(phi_r_pred, x, y, z)
-                    laplace_i = calc_laplace(phi_i_pred, x, y, z)
-                    loss_pde  = laplace_r.pow(2).mean() + laplace_i.pow(2).mean()
+                    # Boundary condition at z = -d_b (anchor points are [:, :25])
+                    _d_phi_r_dz = calc_dz(phi_r_pred, z)
+                    _d_phi_i_dz = calc_dz(phi_i_pred, z)
+                    _loss_bc_r = (_d_phi_r_dz[:, :25] - 1.0).pow(2).mean()
+                    _loss_bc_i = _d_phi_i_dz[:, :25].pow(2).mean()
+                    _loss_pde += _loss_bc_r + _loss_bc_i
 
-                    # Sobolev loss: ∇(∇²φ) on all points
-                    loss_sob  = compute_sobolev_loss(laplace_r, laplace_i, x, y, z)
+                    _loss_sob  = compute_sobolev_loss(_laplace_r, _laplace_i, x, y, z)
 
-                    loss = loss_data + w_pde * loss_pde + w_sob_epoch * loss_sob
-
-                    loss.backward()
+                    _loss = _loss_data + w_pde * _loss_pde + w_sob_epoch * _loss_sob
+                    _loss.backward()
                     torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
-                    optimizer.step()
+                    return _loss
 
-                    total_loss += loss.item()
+                loss_val = optimizer.step(closure)
+                total_loss += loss_val.item() if loss_val is not None else 0.0
 
-                n_batches += 1
+            else:
+                # ── Adam path ─────────────────────────────────────────────
+                optimizer.zero_grad()
 
-        # ============================================================
-        else:
-        # ============================================================
-            if not latent_cache:
-                # Guard: can only happen if epoch 1 was not a data epoch
-                print(f"[Epoch {epoch}] latent_cache is empty — skipping physics epoch.")
-                continue
+                latent = model.encode(wave_params)          # [B, latent_dim]
 
-            for latent, a_b, d_b in latent_cache:
+                # Trunk (gradient live → trunk params updated)
+                phi_r_pred, phi_i_pred = model.forward_trunk_only(latent, x, y, z, a_b, d_b)
 
-                # --- Fresh Sobol/random collocation points (no anchors) ---
-                x, y, z  = generate_colloc_coords(
-                    a_b, d_b, physics_n_pts, device,
-                    sobol_sampler=sobol_phys,
+                # Data loss: anchor points only
+                loss_data = (
+                    mse_loss(phi_r_pred[:, :25], phi_r_true)
+                    + mse_loss(phi_i_pred[:, :25], phi_i_true)
                 )
-                features = compute_7_features(x, y, z)     # [B, physics_n_pts, 7]
 
-                if using_lbfgs:
-                    # ── L-BFGS path ───────────────────────────────────────
-                    # `latent` is detached → no gradient reaches branch params.
-                    # features must be recomputed inside the closure for the
-                    # same reason as the data epoch: backward() frees the
-                    # saved intermediate tensors after the first call.
-                    def closure():
-                        optimizer.zero_grad()
-                        for _t in (x, y, z):
-                            if _t.grad is not None:
-                                _t.grad.zero_()
-                        # Rebuild graph from fixed x, y, z each line-search call
-                        _features = compute_7_features(x, y, z)
-                        phi_r_pred, phi_i_pred = model.forward_trunk_only(latent, _features)
+                # PDE loss: all points
+                laplace_r = calc_laplace(phi_r_pred, x, y, z)
+                laplace_i = calc_laplace(phi_i_pred, x, y, z)
+                loss_pde  = laplace_r.pow(2).mean() + laplace_i.pow(2).mean()
 
-                        _laplace_r = calc_laplace(phi_r_pred, x, y, z)
-                        _laplace_i = calc_laplace(phi_i_pred, x, y, z)
-                        _loss_pde  = _laplace_r.pow(2).mean() + _laplace_i.pow(2).mean()
-                        _loss_sob  = compute_sobolev_loss(_laplace_r, _laplace_i, x, y, z)
+                # Boundary condition at z = -d_b (anchor points are [:, :25])
+                d_phi_r_dz = calc_dz(phi_r_pred, z)
+                d_phi_i_dz = calc_dz(phi_i_pred, z)
+                loss_bc_r = (d_phi_r_dz[:, :25] - 1.0).pow(2).mean()
+                loss_bc_i = d_phi_i_dz[:, :25].pow(2).mean()
+                loss_pde += loss_bc_r + loss_bc_i
 
-                        _loss = w_pde * _loss_pde + w_sob_epoch * _loss_sob
-                        _loss.backward()
-                        torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
-                        return _loss
 
-                    loss_val = optimizer.step(closure)
-                    total_loss += loss_val.item() if loss_val is not None else 0.0
+                # Sobolev loss: ∇(∇²φ) on all points
+                loss_sob  = compute_sobolev_loss(laplace_r, laplace_i, x, y, z)
 
-                else:
-                    # ── Adam path ─────────────────────────────────────────
-                    optimizer.zero_grad()
+                loss = loss_data + w_pde * loss_pde + w_sob_epoch * loss_sob
 
-                    # `latent` is detached → no gradient reaches branch parameters.
-                    # Trunk, bias_real, bias_imag ARE updated by this loss.
-                    phi_r_pred, phi_i_pred = model.forward_trunk_only(latent, features)
+                loss.backward()
+                torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
+                optimizer.step()
 
-                    # PDE loss
-                    laplace_r = calc_laplace(phi_r_pred, x, y, z)
-                    laplace_i = calc_laplace(phi_i_pred, x, y, z)
-                    loss_pde  = laplace_r.pow(2).mean() + laplace_i.pow(2).mean()
+                total_loss += loss.item()
 
-                    # Sobolev loss
-                    loss_sob  = compute_sobolev_loss(laplace_r, laplace_i, x, y, z)
-
-                    # No data loss — we have no ground truth at random points
-                    loss = w_pde * loss_pde + w_sob_epoch * loss_sob
-
-                    loss.backward()
-                    torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
-                    optimizer.step()
-
-                    total_loss += loss.item()
-
-                n_batches += 1
+            n_batches += 1
 
         if epoch % log_every == 0:
-            tag = "data+phys" if is_data_epoch else "phys-only"
             avg = total_loss / max(n_batches, 1)
             opt_tag = "L-BFGS" if using_lbfgs else "Adam"
+            epoch_time = time.time() - t0
             print(
-                f"Epoch {epoch:5d}/{config.p1_epochs}  [{tag}]  "
-                f"opt={opt_tag}  w_sob={w_sob_epoch:.2e}  avg loss: {avg:.6f}"
+                f"Epoch {epoch:5d}/{config.p1_epochs}  [data+phys]  "
+                f"opt={opt_tag}  w_sob={w_sob_epoch:.2e}  avg loss: {avg:.6f}  "
+                f"time: {epoch_time:.2f}s"
             )
 
-        if epoch % 10 == 0:
+        if epoch % 100 == 0:
             model.eval()
             total_val_data_loss = 0.0
             with torch.no_grad():
@@ -554,8 +454,7 @@ def train_phase1(config):
                         a_b, d_b, 0, device,
                         sobol_sampler=None,
                     )
-                    features = compute_7_features(x, y, z)
-                    phi_r_pred, phi_i_pred = model.forward_trunk_only(latent, features)
+                    phi_r_pred, phi_i_pred = model.forward_trunk_only(latent, x, y, z, a_b, d_b)
                     
                     loss_data = (
                         mse_loss(phi_r_pred[:, :25], phi_r_true)
