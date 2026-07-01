@@ -3,6 +3,68 @@ from . import problemcodeAMDC_opt as opt
 import pandas as pd
 import time
 import os
+import sympy as sp
+import functools
+
+# 1. Define the symbolic derivative of the radial basis function A(s)
+@functools.lru_cache(maxsize=None)
+def _get_alform_ds_func(k, m):
+    s = sp.Symbol('s')
+    l = m + 2*k + 1
+    Pl = sp.legendre(l, s)
+    P1 = ((-1)**m) * (1 - s**2)**(sp.Rational(m, 2)) * sp.diff(Pl, s, m)
+    P = P1.subs(s, sp.sqrt(1 - s**2))
+    dP_ds = sp.diff(P, s)
+    return sp.lambdify(s, dP_ds, modules='numpy')
+
+def alform_ds(k, m, s):
+    func = _get_alform_ds_func(k, m)
+    res = func(s)
+    if np.isscalar(res) and np.ndim(s) > 0:
+        return np.full_like(s, res, dtype=np.float64)
+    return res
+
+def evaluate_phi_derivatives(X_sol, N, s_pts, alpha_pts, a_b, b=1.0):
+    a = a_b * b
+    
+    eps = 1e-8
+    s_safe = np.where(s_pts < eps, eps, s_pts)
+    # Clip near 1 to avoid the 1/sqrt(1-s**2) edge singularity
+    s_safe = np.where(s_safe > 1 - eps, 1 - eps, s_safe)
+    
+    dphi_ds = np.zeros(X_sol.shape[:-1] + s_pts.shape, dtype=np.complex128)
+    dphi_dalpha = np.zeros(X_sol.shape[:-1] + s_pts.shape, dtype=np.complex128)
+    
+    q_idx = 0
+    for k in range(N + 1):
+        for m in range(N + 1):
+            p1 = opt.alform(k, m, s_safe)
+            p1_ds = alform_ds(k, m, s_safe)
+            
+            p2 = np.cos(m * alpha_pts)
+            p2_dalpha = -m * np.sin(m * alpha_pts)
+            
+            coeff = X_sol[..., q_idx][..., np.newaxis]
+            
+            dphi_ds += coeff * (p1_ds * p2)
+            dphi_dalpha += coeff * (p1 * p2_dalpha)
+            
+            q_idx += 1
+            
+    # Apply the chain rule conversion to get Cartesian derivatives
+    if isinstance(a, np.ndarray):
+        while a.ndim < dphi_ds.ndim:
+            a = a[..., np.newaxis]
+            
+    dphi_dx = (np.cos(alpha_pts) / a) * dphi_ds - (np.sin(alpha_pts) / (a * s_safe)) * dphi_dalpha
+    dphi_dy = (np.sin(alpha_pts) / b) * dphi_ds + (np.cos(alpha_pts) / (b * s_safe)) * dphi_dalpha
+    
+    # Do not record derivative loss on the edge singularity
+    edge_mask = s_pts >= 1.0 - 1e-10
+    dphi_dx[..., edge_mask] = np.nan + 1j * np.nan
+    dphi_dy[..., edge_mask] = np.nan + 1j * np.nan
+    
+    return dphi_dx, dphi_dy
 
 def evaluate_phi(X_sol, N, s_pts, alpha_pts):
     """
@@ -57,6 +119,10 @@ def generate_dataset(a0, a1, n_a, d0, d1, n_d, k0_val, k1_val, n_k, filename='da
     for i in range(num_points):
         header.append(f'phi_real_{i}')
         header.append(f'phi_imag_{i}')
+        header.append(f'dphi_dx_real_{i}')
+        header.append(f'dphi_dx_imag_{i}')
+        header.append(f'dphi_dy_real_{i}')
+        header.append(f'dphi_dy_imag_{i}')
     header.extend(['Added_Mass', 'Damping_Coefficient'])
 
     
@@ -73,6 +139,13 @@ def generate_dataset(a0, a1, n_a, d0, d1, n_d, k0_val, k1_val, n_k, filename='da
     phi_sweep = evaluate_phi(X_sol_sweep, N, s_pts, alpha_pts)
     print(f"Phi evaluation completed in {time.time()-t0:.2f}s")
     
+    print("Evaluating phi derivatives...")
+    t0 = time.time()
+    dphi_dx_sweep, dphi_dy_sweep = evaluate_phi_derivatives(
+        X_sol_sweep, N, s_pts, alpha_pts, a_b=a_vals[:, None, None], b=b
+    )
+    print(f"Phi derivatives evaluation completed in {time.time()-t0:.2f}s")
+    
     print("Writing to CSV...")
     
     rows = []
@@ -85,11 +158,17 @@ def generate_dataset(a0, a1, n_a, d0, d1, n_d, k0_val, k1_val, n_k, filename='da
                 damping = np.imag(np.pi * final * a_b)
                 
                 phi_vals = phi_sweep[i_a, i_d, i_K]
+                dphi_dx_vals = dphi_dx_sweep[i_a, i_d, i_K]
+                dphi_dy_vals = dphi_dy_sweep[i_a, i_d, i_K]
                 
                 row = [a_b, d_b, K]
-                for phi in phi_vals:
+                for phi, ddx, ddy in zip(phi_vals, dphi_dx_vals, dphi_dy_vals):
                     row.append(phi.real)
                     row.append(phi.imag)
+                    row.append(ddx.real)
+                    row.append(ddx.imag)
+                    row.append(ddy.real)
+                    row.append(ddy.imag)
                 row.extend([added_mass, damping])
                 
                 rows.append(row)
