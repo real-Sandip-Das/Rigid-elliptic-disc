@@ -12,6 +12,8 @@ dependencies = [
     "pandas",
     "scipy",
     "sympy",
+    "jax",
+    "jaxlib",
 ]
 
 [build-system]
