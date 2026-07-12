@@ -59,41 +59,22 @@ def train_phase1(config):
     )
     
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
-        optimizer, mode='min', factor=0.1, patience=100, min_lr=1e-7
+        optimizer, mode='min', factor=1e-5, patience=100, min_lr=1e-5
     )
-    
-    using_lbfgs = False
-
-    def make_lbfgs():
-        return torch.optim.LBFGS(
-            filter(lambda p: p.requires_grad, model.parameters()),
-            lr=1.0,
-            max_iter=config.lbfgs_max_iter,
-            max_eval=config.lbfgs_max_eval,
-            history_size=100,
-            tolerance_grad=1e-7,
-            tolerance_change=1e-9,
-            line_search_fn='strong_wolfe',
-        )
 
     mse_loss = nn.MSELoss()
     start_epoch = 1
 
     alpha_lra = 0.1
-    lambda_der = 1.0
+    lambda_d = 1.0
+    prev_avg_v = float('inf')  # LRA gated until value error is low enough
 
     for epoch in range(start_epoch, config.p1_epochs + 1):
         t0 = time.time()
 
-        if not using_lbfgs:
-            current_lr = optimizer.param_groups[0]['lr']
-            if current_lr <= 1.5e-7:
-                print(f"\n[Epoch {epoch}] LR reached {current_lr:.2e}. Switching: Adam → L-BFGS")
-                optimizer = make_lbfgs()
-                using_lbfgs = True
-
         total_loss = 0.0
         total_loss_v = 0.0
+        total_loss_d = 0.0
         total_grad_norm = 0.0
         n_batches  = 0
 
@@ -112,119 +93,60 @@ def train_phase1(config):
             x.requires_grad_(True)
             y.requires_grad_(True)
 
-            if using_lbfgs:
-                def closure():
-                    optimizer.zero_grad()
-                    if x.grad is not None: x.grad.zero_()
-                    if y.grad is not None: y.grad.zero_()
-                    
-                    latent = model.encode(wave_params)
-                    phi_r_pred, phi_i_pred = model.forward_trunk_only(latent, x, y, a_b)
+            optimizer.zero_grad()
 
-                    # Value Loss (Relative/Normalized MSE)
-                    loss_v = (
-                        mse_loss(phi_r_pred, phi_r_true) / (torch.mean(phi_r_true**2) + 1e-8) +
-                        mse_loss(phi_i_pred, phi_i_true) / (torch.mean(phi_i_true**2) + 1e-8)
-                    )
-                    
-                    # Derivative Loss
-                    dphi_r_dx, dphi_r_dy = calc_first_deriv(phi_r_pred, x, y)
-                    dphi_i_dx, dphi_i_dy = calc_first_deriv(phi_i_pred, x, y)
-                    
-                    # Compute derivative loss, ignore NaNs safely (since edges have NaNs in true targets)
-                    mask = torch.isfinite(dx_r_true)
-                    
-                    if mask.any():
-                        loss_d = (
-                            torch.mean((dphi_r_dx[mask] - dx_r_true[mask])**2) / (torch.mean(dx_r_true[mask]**2) + 1e-8) +
-                            torch.mean((dphi_r_dy[mask] - dy_r_true[mask])**2) / (torch.mean(dy_r_true[mask]**2) + 1e-8) +
-                            torch.mean((dphi_i_dx[mask] - dx_i_true[mask])**2) / (torch.mean(dx_i_true[mask]**2) + 1e-8) +
-                            torch.mean((dphi_i_dy[mask] - dy_i_true[mask])**2) / (torch.mean(dy_i_true[mask]**2) + 1e-8)
-                        )
-                    else:
-                        loss_d = 0.0
-                        
-                    _loss = loss_v + float(lambda_der) * loss_d
-                    
-                    closure.last_loss_v = loss_v.item()
-                    
-                    if not torch.isfinite(_loss):
-                        optimizer.zero_grad()
-                        return torch.tensor(float('inf'), device=_loss.device)
+            latent = model.encode(wave_params)
+            phi_r_pred, phi_i_pred = model.forward_trunk_only(latent, x, y, a_b)
 
-                    _loss.backward()
-                    b_norm = torch.nn.utils.clip_grad_norm_(model.branch.parameters(), max_norm=config.grad_clip_norm)
-                    t_norm = torch.nn.utils.clip_grad_norm_(model.trunk.parameters(), max_norm=config.grad_clip_norm)
-                    closure.last_grad_norm = float((b_norm**2 + t_norm**2)**0.5)
-                    return _loss
+            # Value Loss (Relative/Normalized MSE)
+            loss_v = (
+                mse_loss(phi_r_pred, phi_r_true) / (torch.mean(phi_r_true**2) + 1e-8) +
+                mse_loss(phi_i_pred, phi_i_true) / (torch.mean(phi_i_true**2) + 1e-8)
+            )
 
-                loss_val = optimizer.step(closure)
-                step_loss = loss_val.item() if loss_val is not None else 0.0
-                step_loss_v = getattr(closure, 'last_loss_v', 0.0)
-                step_grad_norm = getattr(closure, 'last_grad_norm', 0.0)
-                
-                total_loss += step_loss
-                total_loss_v += step_loss_v
-                total_grad_norm += step_grad_norm
-
-            else:
-                optimizer.zero_grad()
-
-                latent = model.encode(wave_params)
-                phi_r_pred, phi_i_pred = model.forward_trunk_only(latent, x, y, a_b)
-
-                # Value Loss (Relative/Normalized MSE)
-                loss_v = (
-                    mse_loss(phi_r_pred, phi_r_true) / (torch.mean(phi_r_true**2) + 1e-8) +
-                    mse_loss(phi_i_pred, phi_i_true) / (torch.mean(phi_i_true**2) + 1e-8)
+            dphi_r_dx, dphi_r_dy = calc_first_deriv(phi_r_pred, x, y)
+            dphi_i_dx, dphi_i_dy = calc_first_deriv(phi_i_pred, x, y)
+            
+            mask = torch.isfinite(dx_r_true)
+            if mask.any():
+                loss_d = (
+                    torch.mean((dphi_r_dx[mask] - dx_r_true[mask])**2) / (torch.mean(dx_r_true[mask]**2) + 1e-8) +
+                    torch.mean((dphi_r_dy[mask] - dy_r_true[mask])**2) / (torch.mean(dy_r_true[mask]**2) + 1e-8) +
+                    torch.mean((dphi_i_dx[mask] - dx_i_true[mask])**2) / (torch.mean(dx_i_true[mask]**2) + 1e-8) +
+                    torch.mean((dphi_i_dy[mask] - dy_i_true[mask])**2) / (torch.mean(dy_i_true[mask]**2) + 1e-8)
                 )
+            else:
+                loss_d = 0.0
 
-                dphi_r_dx, dphi_r_dy = calc_first_deriv(phi_r_pred, x, y)
-                dphi_i_dx, dphi_i_dy = calc_first_deriv(phi_i_pred, x, y)
+            if mask.any() and prev_avg_v < config.lra_warmup_threshold:
+                last_layer_weights = [model.trunk[-1].weight]
+                grads_val = torch.autograd.grad(loss_v, last_layer_weights, retain_graph=True, allow_unused=True)[0]
+                grads_der = torch.autograd.grad(loss_d, last_layer_weights, retain_graph=True, allow_unused=True)[0]
                 
-                mask = torch.isfinite(dx_r_true)
-                if mask.any():
-                    loss_d = (
-                        torch.mean((dphi_r_dx[mask] - dx_r_true[mask])**2) / (torch.mean(dx_r_true[mask]**2) + 1e-8) +
-                        torch.mean((dphi_r_dy[mask] - dy_r_true[mask])**2) / (torch.mean(dy_r_true[mask]**2) + 1e-8) +
-                        torch.mean((dphi_i_dx[mask] - dx_i_true[mask])**2) / (torch.mean(dx_i_true[mask]**2) + 1e-8) +
-                        torch.mean((dphi_i_dy[mask] - dy_i_true[mask])**2) / (torch.mean(dy_i_true[mask]**2) + 1e-8)
-                    )
-                else:
-                    loss_d = 0.0
+                max_grad_v = torch.max(torch.abs(grads_val)).item() if grads_val is not None else 0.0
+                mean_grad_d = torch.mean(torch.abs(grads_der)).item() if grads_der is not None else 0.0
+                
+                if mean_grad_d > 0:
+                    lambda_hat = max(1.0, max_grad_v / mean_grad_d)
+                    lambda_d = (1.0 - alpha_lra) * lambda_d + alpha_lra * lambda_hat
 
-                if mask.any():
-                    weights = [p for name, p in model.named_parameters() if 'weight' in name and p.requires_grad]
-                    grads_val = torch.autograd.grad(loss_v, weights, retain_graph=True, allow_unused=True)
-                    grads_der = torch.autograd.grad(loss_d, weights, retain_graph=True, allow_unused=True)
-                    
-                    max_grad_val = max(g.abs().max().item() for g in grads_val if g is not None)
-                    
-                    valid_grads_der = [g for g in grads_der if g is not None]
-                    if valid_grads_der:
-                        flat_grads_der = torch.cat([g.abs().reshape(-1) for g in valid_grads_der])
-                        mean_grad_der = flat_grads_der.mean().item()
-                    else:
-                        mean_grad_der = 0.0
-                    
-                    lambda_hat = max_grad_val / (mean_grad_der + 1e-8)
-                    lambda_der = (1.0 - alpha_lra) * lambda_der + alpha_lra * lambda_hat
+            loss = loss_v + float(lambda_d) * loss_d
 
-                loss = loss_v + float(lambda_der) * loss_d
+            loss.backward()
+            b_norm = torch.nn.utils.clip_grad_norm_(model.branch.parameters(), max_norm=config.grad_clip_norm)
+            t_norm = torch.nn.utils.clip_grad_norm_(model.trunk.parameters(), max_norm=config.grad_clip_norm)
+            batch_grad_norm = float((b_norm**2 + t_norm**2)**0.5)
+            optimizer.step()
 
-                loss.backward()
-                b_norm = torch.nn.utils.clip_grad_norm_(model.branch.parameters(), max_norm=config.grad_clip_norm)
-                t_norm = torch.nn.utils.clip_grad_norm_(model.trunk.parameters(), max_norm=config.grad_clip_norm)
-                batch_grad_norm = float((b_norm**2 + t_norm**2)**0.5)
-                optimizer.step()
+            step_loss = loss.item()
+            step_loss_v = loss_v.item()
+            step_loss_d = loss_d.item() if isinstance(loss_d, torch.Tensor) else loss_d
+            step_grad_norm = batch_grad_norm
 
-                step_loss = loss.item()
-                step_loss_v = loss_v.item()
-                step_grad_norm = batch_grad_norm
-
-                total_loss += step_loss
-                total_loss_v += step_loss_v
-                total_grad_norm += step_grad_norm
+            total_loss += step_loss
+            total_loss_v += step_loss_v
+            total_loss_d += step_loss_d
+            total_grad_norm += step_grad_norm
 
             n_batches += 1
             
@@ -233,34 +155,37 @@ def train_phase1(config):
                     "batch/loss": step_loss,
                     "batch/rel_err": step_loss_v,
                     "batch/grad_norm": step_grad_norm,
-                    "batch/lambda_der": float(lambda_der)
+                    "batch/lambda_d": float(lambda_d)
                 })
 
         avg = total_loss / max(n_batches, 1)
         avg_v = total_loss_v / max(n_batches, 1)
+        avg_d = total_loss_d / max(n_batches, 1)
         avg_grad_norm = total_grad_norm / max(n_batches, 1)
+        prev_avg_v = avg_v  # Used to gate LRA next epoch
         
-        if not using_lbfgs:
-            scheduler.step(avg_v)
+        # Track unweighted sum of losses so LR doesn't drop while model is learning derivatives
+        scheduler.step(avg_v + avg_d)
 
         if epoch % log_every == 0:
-            opt_tag = "L-BFGS" if using_lbfgs else "Adam"
             epoch_time = time.time() - t0
             print(
                 f"Epoch {epoch:5d}/{config.p1_epochs} | "
-                f"opt={opt_tag} train loss: {avg:.6f} | "
+                f"opt=Adam train loss: {avg:.6f} | "
                 f"train rel err: {avg_v:.6f} | "
                 f"grad norm: {avg_grad_norm:.4f} | "
                 f"time: {epoch_time:.2f}s"
             )
 
             if config.use_wandb:
+                current_lr = optimizer.param_groups[0]['lr']
                 wandb.log({
                     "epoch": epoch,
                     "train/loss": avg,
                     "train/rel_err": avg_v,
                     "train/grad_norm": avg_grad_norm,
-                    "train/lambda_der": float(lambda_der),
+                    "train/lambda_d": float(lambda_d),
+                    "train/log10_lr": math.log10(current_lr),
                     "train/epoch_time_s": epoch_time
                 })
 
@@ -307,7 +232,7 @@ def train_phase1(config):
                     else:
                         loss_d = 0.0
                         
-                    val_loss += (loss_v + float(lambda_der) * loss_d).item()
+                    val_loss += (loss_v + float(lambda_d) * loss_d).item()
                     val_loss_v += loss_v.item()
 
             avg_val_loss = val_loss / max(1, len(val_loader))
@@ -323,9 +248,7 @@ def train_phase1(config):
                 
             model.train()
 
-        if using_lbfgs and avg_grad_norm < 1e-7:
-            print(f"\n[Epoch {epoch}] L-BFGS converged (grad norm {avg_grad_norm:.4e} < 1e-7). Stopping early.")
-            break
+        # Early stop if validation starts plateauing at very low values can be added here if needed
 
     torch.save(model.state_dict(), config.phase1_model_path)
     print(f"Phase 1 complete. Model saved → {config.phase1_model_path}")

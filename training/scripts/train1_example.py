@@ -6,16 +6,16 @@ cfg = WaveConfig()
 
 cfg.data_path = "data/full_pinn_dataset.csv"
 
-cfg.grad_clip_norm = 500000.0
+cfg.grad_clip_norm = 1000.0
 cfg.p1_epochs = 10000
-cfg.p1_lr = 1e-3
+cfg.p1_lr = 3e-3
 cfg.p1_batch_size = 512
-cfg.lbfgs_max_iter = 50000
-cfg.lbfgs_max_eval = 50000
+
+cfg.lra_warmup_threshold = 0.3
 cfg.log_every = 1
 
 cfg.use_wandb = True
-cfg.wandb_name = "phase1-run1"
+cfg.wandb_name = f"BS:{cfg.p1_batch_size} lr:{cfg.p1_lr:.1e}"
 
 # ── Hugging Face Hub Integration (Optional) ───────────────────────────
 cfg.hf_repo_id = ""

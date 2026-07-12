@@ -23,6 +23,7 @@ class WaveConfig:
     p1_lr: float = 1e-3
     colloc_points_per_batch: int = 2000
     grad_clip_norm: float = 1.0      # Maximum gradient norm for clipping
+    lra_warmup_threshold: float = 0.5 # LRA only activates once rel value error drops below this
 
     # Phase 1: Sobolev loss weights
     w_sob_init: float = 1e-6         # Initial Sobolev (∇(∇²φ)) loss weight
@@ -33,9 +34,6 @@ class WaveConfig:
     # Phase 1: Sobol quasi-random sampling
     use_sobol: bool = True            # Replace uniform random with Sobol sequences
 
-    # Phase 1: Optimizer curriculum (Adam → L-BFGS)
-    lbfgs_max_iter: int = 50000       # Max iterations per L-BFGS step() call
-    lbfgs_max_eval: int = 50000       # max_eval per L-BFGS step() call
 
     # Phase 1: torch.compile acceleration (PyTorch >= 2.0)
     use_compile: bool = True          # Wrap model with torch.compile if available
