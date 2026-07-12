@@ -20,6 +20,7 @@ class WaveConfig:
     p1_epochs: int = 5000
     p1_lr: float = 1e-3
     colloc_points_per_batch: int = 2000
+    grad_clip_norm: float = 1.0      # Maximum gradient norm for clipping
 
     # Phase 1: Sobolev loss weights
     w_sob_init: float = 1e-6         # Initial Sobolev (∇(∇²φ)) loss weight

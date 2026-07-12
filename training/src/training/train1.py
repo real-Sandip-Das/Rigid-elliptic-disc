@@ -75,6 +75,8 @@ def train_phase1(config):
                 using_lbfgs = True
 
         total_loss = 0.0
+        total_loss_v = 0.0
+        total_grad_norm = 0.0
         n_batches  = 0
 
         for batch in train_loader:
@@ -126,17 +128,22 @@ def train_phase1(config):
                         
                     _loss = loss_v + float(lambda_der) * loss_d
                     
+                    closure.last_loss_v = loss_v.item()
+                    
                     if not torch.isfinite(_loss):
                         optimizer.zero_grad()
                         return torch.tensor(float('inf'), device=_loss.device)
 
                     _loss.backward()
-                    torch.nn.utils.clip_grad_norm_(model.branch.parameters(), max_norm=1.0)
-                    torch.nn.utils.clip_grad_norm_(model.trunk.parameters(), max_norm=1.0)
+                    b_norm = torch.nn.utils.clip_grad_norm_(model.branch.parameters(), max_norm=config.grad_clip_norm)
+                    t_norm = torch.nn.utils.clip_grad_norm_(model.trunk.parameters(), max_norm=config.grad_clip_norm)
+                    closure.last_grad_norm = float((b_norm**2 + t_norm**2)**0.5)
                     return _loss
 
                 loss_val = optimizer.step(closure)
                 total_loss += loss_val.item() if loss_val is not None else 0.0
+                total_loss_v += getattr(closure, 'last_loss_v', 0.0)
+                total_grad_norm += getattr(closure, 'last_grad_norm', 0.0)
 
             else:
                 optimizer.zero_grad()
@@ -184,25 +191,32 @@ def train_phase1(config):
                 loss = loss_v + float(lambda_der) * loss_d
 
                 loss.backward()
-                torch.nn.utils.clip_grad_norm_(model.branch.parameters(), max_norm=1.0)
-                torch.nn.utils.clip_grad_norm_(model.trunk.parameters(), max_norm=1.0)
+                b_norm = torch.nn.utils.clip_grad_norm_(model.branch.parameters(), max_norm=config.grad_clip_norm)
+                t_norm = torch.nn.utils.clip_grad_norm_(model.trunk.parameters(), max_norm=config.grad_clip_norm)
+                batch_grad_norm = float((b_norm**2 + t_norm**2)**0.5)
                 optimizer.step()
 
                 total_loss += loss.item()
+                total_loss_v += loss_v.item()
+                total_grad_norm += batch_grad_norm
 
             n_batches += 1
 
         avg = total_loss / max(n_batches, 1)
+        avg_v = total_loss_v / max(n_batches, 1)
+        avg_grad_norm = total_grad_norm / max(n_batches, 1)
         
         if not using_lbfgs:
-            scheduler.step(avg)
+            scheduler.step(avg_v)
 
         if epoch % log_every == 0:
             opt_tag = "L-BFGS" if using_lbfgs else "Adam"
             epoch_time = time.time() - t0
             print(
                 f"Epoch {epoch:5d}/{config.p1_epochs} | "
-                f"opt={opt_tag} train loss: {avg:.6f} "
+                f"opt={opt_tag} train loss: {avg:.6f} | "
+                f"train rel err: {avg_v:.6f} | "
+                f"grad norm: {avg_grad_norm:.4f} | "
                 f"time: {epoch_time:.2f}s"
             )
 
