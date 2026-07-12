@@ -10,7 +10,12 @@ def main():
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     
     print(f"Loading model from {cfg.phase1_model_path} onto {device}")
-    model = DeepONetWaveSurrogate(latent_dim=cfg.latent_dim, subnet_width=cfg.subnet_width).to(device)
+    model = DeepONetWaveSurrogate(
+        latent_dim=cfg.latent_dim, 
+        subnet_width=cfg.subnet_width,
+        fourier_mapping_size=cfg.fourier_mapping_size,
+        fourier_scale=cfg.fourier_scale
+    ).to(device)
     model.load_state_dict(torch.load(cfg.phase1_model_path, map_location=device))
     model.eval()
     

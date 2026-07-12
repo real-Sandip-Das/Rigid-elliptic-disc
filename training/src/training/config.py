@@ -12,8 +12,10 @@ class WaveConfig:
     phase2_model_path: str = os.path.join(checkpoint_dir, "phase2_final.pth")
 
     # Architecture
-    latent_dim: int = 32
-    subnet_width: int = 32
+    latent_dim: int = 256
+    subnet_width: int = 64
+    fourier_mapping_size: int = 128
+    fourier_scale: float = 2.0
 
     # Phase 1: PINN Training (Branch + Trunk)
     p1_batch_size: int = 32
@@ -32,8 +34,8 @@ class WaveConfig:
     use_sobol: bool = True            # Replace uniform random with Sobol sequences
 
     # Phase 1: Optimizer curriculum (Adam → L-BFGS)
-    lbfgs_max_iter: int = 50          # Max iterations per L-BFGS step() call
-    lbfgs_max_eval: int = 25          # max_eval per L-BFGS step() call
+    lbfgs_max_iter: int = 50000       # Max iterations per L-BFGS step() call
+    lbfgs_max_eval: int = 50000       # max_eval per L-BFGS step() call
 
     # Phase 1: torch.compile acceleration (PyTorch >= 2.0)
     use_compile: bool = True          # Wrap model with torch.compile if available

@@ -29,27 +29,58 @@ class SiLU(nn.Module):
         return x * torch.sigmoid(x)
 
 
+class FourierFeatureEmbedding(nn.Module):
+    def __init__(self, in_features, mapping_size, scale=1.0):
+        super().__init__()
+        # mapping_size is the number of sin/cos pairs. Total output size will be 2 * mapping_size
+        self.in_features = in_features
+        self.mapping_size = mapping_size
+        
+        # B matrix must be FIXED and NOT trained. We register it as a buffer.
+        # Sampling from normal distribution calibrated by the 'scale' parameter
+        B = torch.randn(in_features, mapping_size) * scale
+        self.register_buffer('B', B)
+        
+    def forward(self, x):
+        # x shape: (batch_size, in_features)
+        # Compute 2 * pi * x * B
+        projection = 2 * torch.pi * torch.matmul(x, self.B)
+        
+        # Concatenate sine and cosine components
+        return torch.cat([torch.sin(projection), torch.cos(projection)], dim=-1)
+
+
 class DeepONetWaveSurrogate(nn.Module):
-    def __init__(self, latent_dim=256, subnet_width=128):
+    def _make_linear(self, in_features, out_features, apply_wnorm=False):
+        layer = nn.Linear(in_features, out_features)
+        nn.init.xavier_uniform_(layer.weight)
+        if layer.bias is not None:
+            nn.init.zeros_(layer.bias)
+        if apply_wnorm:
+            return torch.nn.utils.parametrizations.weight_norm(layer)
+        return layer
+
+    def __init__(self, latent_dim=256, subnet_width=128, fourier_mapping_size=128, fourier_scale=1.0):
         super().__init__()
 
         self.branch = nn.Sequential(
-            nn.Linear(3, subnet_width), SiLU(),
-            nn.Linear(subnet_width, subnet_width), SiLU(),
-            nn.Linear(subnet_width, latent_dim),
+            self._make_linear(3, subnet_width, apply_wnorm=True), SiLU(),
+            self._make_linear(subnet_width, subnet_width, apply_wnorm=True), SiLU(),
+            self._make_linear(subnet_width, latent_dim, apply_wnorm=True),
         )
 
-        # Input: 5 features (r, cos_t, sin_t, x, y)
+        # Input: 5 features (r, cos_t, sin_t, x, y) passed to FourierFeatureEmbedding
         self.trunk = nn.Sequential(
-            nn.Linear(5, subnet_width * 2), SiLU(),
-            nn.Linear(subnet_width * 2, subnet_width * 2), SiLU(),
-            nn.Linear(subnet_width * 2, subnet_width * 2), SiLU(),
-            nn.Linear(subnet_width * 2, latent_dim * 2),
+            FourierFeatureEmbedding(5, fourier_mapping_size, scale=fourier_scale),
+            self._make_linear(2 * fourier_mapping_size, subnet_width * 2), SiLU(),
+            self._make_linear(subnet_width * 2, subnet_width * 2), SiLU(),
+            self._make_linear(subnet_width * 2, subnet_width * 2), SiLU(),
+            self._make_linear(subnet_width * 2, latent_dim * 2),
         )
 
         self.mlp_head = nn.Sequential(
-            nn.Linear(latent_dim, subnet_width), SiLU(),
-            nn.Linear(subnet_width, 2),
+            self._make_linear(latent_dim, subnet_width), SiLU(),
+            self._make_linear(subnet_width, 2),
         )
 
         self.bias_real = nn.Parameter(torch.zeros(1))

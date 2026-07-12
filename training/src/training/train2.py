@@ -9,7 +9,12 @@ def train_phase2(config):
     print(f"Starting Phase 2 Training on {device}...")
 
     train_loader, val_loader = get_dataloaders(config.data_path, config.p2_batch_size)
-    model = DeepONetWaveSurrogate(latent_dim=config.latent_dim, subnet_width=config.subnet_width).to(device)
+    model = DeepONetWaveSurrogate(
+        latent_dim=config.latent_dim, 
+        subnet_width=config.subnet_width,
+        fourier_mapping_size=config.fourier_mapping_size,
+        fourier_scale=config.fourier_scale
+    ).to(device)
     
     # Load frozen Phase 1 weights
     model.load_state_dict(torch.load(config.phase1_model_path, map_location=device, weights_only=True))

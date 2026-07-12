@@ -35,7 +35,12 @@ def train_phase1(config):
     log_every     = getattr(config, 'log_every', 1)
 
     train_loader, val_loader = get_dataloaders(config.data_path, config.p1_batch_size)
-    model = DeepONetWaveSurrogate(latent_dim=config.latent_dim, subnet_width=config.subnet_width).to(device)
+    model = DeepONetWaveSurrogate(
+        latent_dim=config.latent_dim, 
+        subnet_width=config.subnet_width,
+        fourier_mapping_size=config.fourier_mapping_size,
+        fourier_scale=config.fourier_scale
+    ).to(device)
     model.freeze_for_phase1()
 
     optimizer = torch.optim.Adam(
@@ -52,9 +57,12 @@ def train_phase1(config):
     def make_lbfgs():
         return torch.optim.LBFGS(
             filter(lambda p: p.requires_grad, model.parameters()),
-            lr=0.1,
-            max_iter=lbfgs_maxiter,
-            max_eval=lbfgs_maxeval,
+            lr=1.0,
+            max_iter=config.lbfgs_max_iter,
+            max_eval=config.lbfgs_max_eval,
+            history_size=100,
+            tolerance_grad=1e-7,
+            tolerance_change=1e-9,
             line_search_fn='strong_wolfe',
         )
 
@@ -270,6 +278,10 @@ def train_phase1(config):
             avg_val_loss_v = val_loss_v / max(1, len(val_loader))
             print(f"Epoch {epoch:5d}/{config.p1_epochs} | Validation loss: {avg_val_loss:.6f} | Relative Value Error: {avg_val_loss_v:.6f}")
             model.train()
+
+        if using_lbfgs and avg_grad_norm < 1e-7:
+            print(f"\n[Epoch {epoch}] L-BFGS converged (grad norm {avg_grad_norm:.4e} < 1e-7). Stopping early.")
+            break
 
     torch.save(model.state_dict(), config.phase1_model_path)
     print(f"Phase 1 complete. Model saved → {config.phase1_model_path}")
