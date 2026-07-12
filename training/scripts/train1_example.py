@@ -11,7 +11,7 @@ cfg.p1_epochs = 10000
 cfg.p1_lr = 3e-3
 cfg.p1_batch_size = 512
 
-cfg.lra_warmup_threshold = 0.3
+cfg.lra_warmup_threshold = 0.02
 cfg.log_every = 1
 
 cfg.use_wandb = True

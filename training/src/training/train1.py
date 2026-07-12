@@ -3,6 +3,7 @@ import time
 import os
 import dataclasses
 import wandb
+import random
 
 import numpy as np
 import torch
@@ -29,6 +30,14 @@ def calc_first_deriv(phi, x, y):
     return dphi_dx, dphi_dy
 
 def train_phase1(config):
+    # Set seed for reproducibility
+    seed = getattr(config, 'seed', 42)
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(seed)
+
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print(f"Phase 1 on {device}  |  data values + derivatives")
 
@@ -43,7 +52,7 @@ def train_phase1(config):
     lbfgs_maxeval = getattr(config, 'lbfgs_max_eval', 25)
     log_every     = getattr(config, 'log_every', 1)
 
-    train_loader, val_loader = get_dataloaders(config.data_path, config.p1_batch_size)
+    train_loader, val_loader = get_dataloaders(config.data_path, config.p1_batch_size, seed=seed)
     model = DeepONetWaveSurrogate(
         latent_dim=config.latent_dim, 
         subnet_width=config.subnet_width,
@@ -59,7 +68,7 @@ def train_phase1(config):
     )
     
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
-        optimizer, mode='min', factor=1e-5, patience=100, min_lr=1e-5
+        optimizer, mode='min', factor=0.1, patience=100, min_lr=1e-5
     )
 
     mse_loss = nn.MSELoss()

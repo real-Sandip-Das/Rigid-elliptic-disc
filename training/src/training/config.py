@@ -18,6 +18,7 @@ class WaveConfig:
     fourier_scale: float = 2.0
 
     # Phase 1: PINN Training (Branch + Trunk)
+    seed: int = 42
     p1_batch_size: int = 32
     p1_epochs: int = 5000
     p1_lr: float = 1e-3
