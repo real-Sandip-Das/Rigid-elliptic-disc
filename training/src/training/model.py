@@ -7,14 +7,13 @@ import torch.nn as nn
 # Spatial feature engineering
 # ──────────────────────────────────────────────────────────────────────────────
 
-def compute_7_features(x, y, z):
+def compute_5_features(x, y):
     """
-    (x, y, z) of shape [B, P]  →  [B, P, 7] cylindrical Fourier features.
+    (x, y) of shape [B, P]  →  [B, P, 5] cylindrical Fourier features + cartesian.
 
     Expects *normalised* coordinates:
         x  = x_physical / a_b   ∈ [-1, 1] inside the ellipse
         y  = y_physical          ∈ [-1, 1] inside the ellipse  (b = 1)
-        z  = z_physical / d_b   ∈ [-1, 0] (disc plane to surface)
 
     eps in r prevents NaN at the origin when differentiating cos θ / sin θ.
     """
@@ -22,10 +21,7 @@ def compute_7_features(x, y, z):
     cos_t = x / r
     sin_t = y / r
 
-    return torch.stack(
-        [r, cos_t, sin_t, z, torch.sin(z), torch.sin(2 * z), torch.sin(3 * z)],
-        dim=-1,
-    )   # [B, P, 7]
+    return torch.stack([r, cos_t, sin_t, x, y], dim=-1)   # [B, P, 5]
 
 
 class SiLU(nn.Module):
@@ -34,26 +30,26 @@ class SiLU(nn.Module):
 
 
 class DeepONetWaveSurrogate(nn.Module):
-    def __init__(self, latent_dim=16):
+    def __init__(self, latent_dim=256, subnet_width=128):
         super().__init__()
 
         self.branch = nn.Sequential(
-            nn.Linear(3, 16), SiLU(),
-            nn.Linear(16, 16), SiLU(),
-            nn.Linear(16, latent_dim),
+            nn.Linear(3, subnet_width), SiLU(),
+            nn.Linear(subnet_width, subnet_width), SiLU(),
+            nn.Linear(subnet_width, latent_dim),
         )
 
-        # Input: 7 features (r, cos_t, sin_t, z, sin(z), sin(2z), sin(3z))
+        # Input: 5 features (r, cos_t, sin_t, x, y)
         self.trunk = nn.Sequential(
-            nn.Linear(7, 32), SiLU(),
-            nn.Linear(32, 32), SiLU(),
-            nn.Linear(32, 32), SiLU(),
-            nn.Linear(32, latent_dim * 2),
+            nn.Linear(5, subnet_width * 2), SiLU(),
+            nn.Linear(subnet_width * 2, subnet_width * 2), SiLU(),
+            nn.Linear(subnet_width * 2, subnet_width * 2), SiLU(),
+            nn.Linear(subnet_width * 2, latent_dim * 2),
         )
 
         self.mlp_head = nn.Sequential(
-            nn.Linear(latent_dim, 16), SiLU(),
-            nn.Linear(16, 2),
+            nn.Linear(latent_dim, subnet_width), SiLU(),
+            nn.Linear(subnet_width, 2),
         )
 
         self.bias_real = nn.Parameter(torch.zeros(1))
@@ -74,35 +70,30 @@ class DeepONetWaveSurrogate(nn.Module):
         """
         return self.branch(wave_params)
 
-    def forward_trunk_only(self, latent, x, y, z, a_b, d_b):
+    def forward_trunk_only(self, latent, x, y, a_b):
         """
         Trunk forward pass using a pre-computed branch latent and raw spatial
         coordinates.
 
         Normalisation is applied internally:
-            x_n = x / a_b,  y_n = y,  z_n = z / d_b
+            x_n = x / a_b,  y_n = y
         so the trunk always sees dimensionless inputs in [-1, 1] regardless of
-        the disc geometry.  Crucially, the autograd graph still roots at the
-        original x, y, z leaves, so calc_laplace(phi, x, y, z) computes ∇²φ
-        in physical coordinates without any chain-rule correction needed.
+        the disc geometry.
 
         Args:
-            latent : [B, latent_dim]  — may be detached (physics epoch)
-                      or live in the graph (data epoch).
-            x, y, z: [B, P]           — raw physical coordinates, each a
+            latent : [B, latent_dim]
+            x, y   : [B, P]           — raw physical coordinates, each a
                       requires_grad=True leaf tensor.
             a_b    : [B]              — semi-axis ratio (normalisation for x)
-            d_b    : [B]              — submergence depth  (normalisation for z)
 
         Returns:
             phi_real, phi_imag : [B, P] each.
         """
         # Normalise: inputs become dimensionless w.r.t. disc geometry.
-        # Autograd graph still connects to raw x, y, z leaves.
+        # Autograd graph still connects to raw x, y leaves.
         x_n = x / a_b.unsqueeze(1)   # [B, P]
-        z_n = z / d_b.unsqueeze(1)   # [B, P]
-
-        spatial_features = compute_7_features(x_n, y, z_n)      # [B, P, 7]
+        
+        spatial_features = compute_5_features(x_n, y)      # [B, P, 5]
 
         basis = self.trunk(spatial_features)                      # [B, P, latent_dim*2]
         basis_real, basis_imag = torch.chunk(basis, 2, dim=-1)
@@ -116,10 +107,9 @@ class DeepONetWaveSurrogate(nn.Module):
     # Convenience: full forward (encode + trunk)
     # ------------------------------------------------------------------
 
-    def forward(self, wave_params, x, y, z):
+    def forward(self, wave_params, x, y):
         a_b = wave_params[:, 0]
-        d_b = wave_params[:, 1]
-        return self.forward_trunk_only(self.encode(wave_params), x, y, z, a_b, d_b)
+        return self.forward_trunk_only(self.encode(wave_params), x, y, a_b)
 
     # ------------------------------------------------------------------
     # Phase-2 coefficient head

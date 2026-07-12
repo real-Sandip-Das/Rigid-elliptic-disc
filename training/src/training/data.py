@@ -2,33 +2,47 @@ import torch
 from torch.utils.data import Dataset, DataLoader
 import pandas as pd
 import numpy as np
-import math
 
 class WaveDataset(Dataset):
     def __init__(self, csv_file):
         self.df = pd.read_csv(csv_file)
         
         # Inputs: a_b, d_b, K
-        self.wave_params = self.df[['a_b', 'd_b', 'wave_frequency_K']].values
+        self.wave_params = torch.tensor(self.df[['a_b', 'd_b', 'wave_frequency_K']].values, dtype=torch.float32)
         
-        # Targets: Phi (Real and Imag separated)
+        # Targets: Phi values
         real_cols = [f'phi_real_{i}' for i in range(25)]
         imag_cols = [f'phi_imag_{i}' for i in range(25)]
-        self.phi_real = self.df[real_cols].values
-        self.phi_imag = self.df[imag_cols].values
+        self.phi_real = torch.tensor(self.df[real_cols].values, dtype=torch.float32)
+        self.phi_imag = torch.tensor(self.df[imag_cols].values, dtype=torch.float32)
+        
+        # Targets: Phi derivatives
+        dx_real_cols = [f'dphi_dx_real_{i}' for i in range(25)]
+        dx_imag_cols = [f'dphi_dx_imag_{i}' for i in range(25)]
+        dy_real_cols = [f'dphi_dy_real_{i}' for i in range(25)]
+        dy_imag_cols = [f'dphi_dy_imag_{i}' for i in range(25)]
+        
+        self.dphi_dx_real = torch.tensor(self.df[dx_real_cols].values, dtype=torch.float32)
+        self.dphi_dx_imag = torch.tensor(self.df[dx_imag_cols].values, dtype=torch.float32)
+        self.dphi_dy_real = torch.tensor(self.df[dy_real_cols].values, dtype=torch.float32)
+        self.dphi_dy_imag = torch.tensor(self.df[dy_imag_cols].values, dtype=torch.float32)
         
         # Targets: Global Coefficients
-        self.coeffs = self.df[['Added_Mass', 'Damping_Coefficient']].values
+        self.coeffs = torch.tensor(self.df[['Added_Mass', 'Damping_Coefficient']].values, dtype=torch.float32)
 
     def __len__(self):
         return len(self.df)
 
     def __getitem__(self, idx):
         return (
-            torch.tensor(self.wave_params[idx], dtype=torch.float32),
-            torch.tensor(self.phi_real[idx], dtype=torch.float32),
-            torch.tensor(self.phi_imag[idx], dtype=torch.float32),
-            torch.tensor(self.coeffs[idx], dtype=torch.float32)
+            self.wave_params[idx],
+            self.phi_real[idx],
+            self.phi_imag[idx],
+            self.dphi_dx_real[idx],
+            self.dphi_dx_imag[idx],
+            self.dphi_dy_real[idx],
+            self.dphi_dy_imag[idx],
+            self.coeffs[idx]
         )
 
 def get_dataloaders(csv_file, batch_size, val_split=0.2, seed=42):
@@ -47,17 +61,8 @@ def get_dataloaders(csv_file, batch_size, val_split=0.2, seed=42):
     
     return train_loader, val_loader
 
-def compute_8_features(x, y, z):
-    """Helper to convert cartesian to your custom Fourier spatial features."""
-    r = torch.sqrt(x**2 + y**2)
-    theta = torch.atan2(y, x)
-    return torch.stack([
-        r, theta, torch.sin(theta), torch.cos(theta),
-        z, torch.sin(z), torch.sin(2*z), torch.sin(3*z)
-    ], dim=-1)
-
-def generate_anchor_features(a_b, d_b, N_s=3, N_alpha=8):
-    """Generates the 8 features for the 25 specific dataset points."""
+def generate_anchor_coords(a_b, N_s=3, N_alpha=8):
+    """Generates the x, y coordinates for the 25 specific dataset points."""
     batch_size = a_b.shape[0]
     
     s_vals = [0.0]
@@ -75,26 +80,5 @@ def generate_anchor_features(a_b, d_b, N_s=3, N_alpha=8):
     
     x = a_b.unsqueeze(1) * s_t * torch.cos(alpha_t)
     y = 1.0 * s_t * torch.sin(alpha_t)
-    z = -d_b.unsqueeze(1).repeat(1, 25)
     
-    return compute_8_features(x, y, z)
-
-def generate_collocation_features(a_b, d_b, num_points):
-    """Generates random points in the fluid domain for Sobolev/PDE training."""
-    batch_size = a_b.shape[0]
-    device = a_b.device
-    
-    # Randomly sample s [0, 3] to go past the disk, alpha [0, 2pi], z from bottom to surface [0, d_b]
-    s_rand = torch.rand((batch_size, num_points), device=device) * 3.0
-    alpha_rand = torch.rand((batch_size, num_points), device=device) * 2 * math.pi
-    
-    # Z ranges from -d_b (depth of disk) up to 0 (surface)
-    z_rand = -d_b.unsqueeze(1) * torch.rand((batch_size, num_points), device=device)
-    
-    x_rand = a_b.unsqueeze(1) * s_rand * torch.cos(alpha_rand)
-    y_rand = 1.0 * s_rand * torch.sin(alpha_rand)
-    
-    features = compute_8_features(x_rand, y_rand, z_rand)
-    features.requires_grad_(True) # CRITICAL: Required to compute d/dx for PDE loss
-    
-    return features
+    return x, y

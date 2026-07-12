@@ -13,6 +13,7 @@ class WaveConfig:
 
     # Architecture
     latent_dim: int = 32
+    subnet_width: int = 32
 
     # Phase 1: PINN Training (Branch + Trunk)
     p1_batch_size: int = 32
@@ -20,8 +21,7 @@ class WaveConfig:
     p1_lr: float = 1e-3
     colloc_points_per_batch: int = 2000
 
-    # Phase 1: PDE / Sobolev loss weights
-    w_pde: float = 1e-4              # PDE residual loss weight
+    # Phase 1: Sobolev loss weights
     w_sob_init: float = 1e-6         # Initial Sobolev (∇(∇²φ)) loss weight
     w_sob_max: float = 1e-4          # Maximum Sobolev loss weight
     sob_growth: float = 1.01         # Multiplicative growth applied to w_sob each epoch
