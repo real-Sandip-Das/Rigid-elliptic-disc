@@ -7,21 +7,15 @@ import torch.nn as nn
 # Spatial feature engineering
 # ──────────────────────────────────────────────────────────────────────────────
 
-def compute_5_features(x, y):
+def compute_2_features(x, y):
     """
-    (x, y) of shape [B, P]  →  [B, P, 5] cylindrical Fourier features + cartesian.
+    (x, y) of shape [B, P]  →  [B, P, 2] features (x, y).
 
     Expects *normalised* coordinates:
         x  = x_physical / a_b   ∈ [-1, 1] inside the ellipse
         y  = y_physical          ∈ [-1, 1] inside the ellipse  (b = 1)
-
-    eps in r prevents NaN at the origin when differentiating cos θ / sin θ.
     """
-    r     = torch.sqrt(x ** 2 + y ** 2 + 1e-8)
-    cos_t = x / r
-    sin_t = y / r
-
-    return torch.stack([r, cos_t, sin_t, x, y], dim=-1)   # [B, P, 5]
+    return torch.stack([x, y], dim=-1)   # [B, P, 2]
 
 
 class SiLU(nn.Module):
@@ -46,8 +40,8 @@ class FourierFeatureEmbedding(nn.Module):
         # Compute 2 * pi * x * B
         projection = 2 * torch.pi * torch.matmul(x, self.B)
         
-        # Concatenate sine and cosine components
-        return torch.cat([torch.sin(projection), torch.cos(projection)], dim=-1)
+        # Concatenate original features with sine and cosine components
+        return torch.cat([x, torch.sin(projection), torch.cos(projection)], dim=-1)
 
 
 class DeepONetWaveSurrogate(nn.Module):
@@ -69,10 +63,10 @@ class DeepONetWaveSurrogate(nn.Module):
             self._make_linear(subnet_width, latent_dim, apply_wnorm=True),
         )
 
-        # Input: 5 features (r, cos_t, sin_t, x, y) passed to FourierFeatureEmbedding
+        # Input: 2 features (x, y) passed to FourierFeatureEmbedding
         self.trunk = nn.Sequential(
-            FourierFeatureEmbedding(5, fourier_mapping_size, scale=fourier_scale),
-            self._make_linear(2 * fourier_mapping_size, subnet_width * 2), SiLU(),
+            FourierFeatureEmbedding(2, fourier_mapping_size, scale=fourier_scale),
+            self._make_linear(2 + 2 * fourier_mapping_size, subnet_width * 2), SiLU(),
             self._make_linear(subnet_width * 2, subnet_width * 2), SiLU(),
             self._make_linear(subnet_width * 2, subnet_width * 2), SiLU(),
             self._make_linear(subnet_width * 2, latent_dim * 2),
@@ -124,7 +118,7 @@ class DeepONetWaveSurrogate(nn.Module):
         # Autograd graph still connects to raw x, y leaves.
         x_n = x / a_b.unsqueeze(1)   # [B, P]
         
-        spatial_features = compute_5_features(x_n, y)      # [B, P, 5]
+        spatial_features = compute_2_features(x_n, y)      # [B, P, 2]
 
         basis = self.trunk(spatial_features)                      # [B, P, latent_dim*2]
         basis_real, basis_imag = torch.chunk(basis, 2, dim=-1)

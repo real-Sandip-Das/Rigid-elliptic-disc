@@ -1,4 +1,6 @@
 import time
+import dataclasses
+import wandb
 import torch
 import torch.nn.functional as F
 from training.model import DeepONetWaveSurrogate
@@ -7,6 +9,13 @@ from training.data import get_dataloaders
 def train_phase2(config):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print(f"Starting Phase 2 Training on {device}...")
+
+    if config.use_wandb:
+        wandb.init(
+            project=config.wandb_project,
+            config=dataclasses.asdict(config),
+            name=config.wandb_name if config.wandb_name else "phase2"
+        )
 
     train_loader, val_loader = get_dataloaders(config.data_path, config.p2_batch_size)
     model = DeepONetWaveSurrogate(
@@ -20,6 +29,7 @@ def train_phase2(config):
     model.load_state_dict(torch.load(config.phase1_model_path, map_location=device, weights_only=True))
     model.freeze_for_phase2()
     
+
     optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), lr=config.p2_lr)
     
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
@@ -41,7 +51,11 @@ def train_phase2(config):
             
             loss.backward()
             optimizer.step()
-            total_train_loss += loss.item()
+            step_loss = loss.item()
+            total_train_loss += step_loss
+            
+            if config.use_wandb:
+                wandb.log({"batch/loss": step_loss})
             
         avg_train_loss = total_train_loss / max(len(train_loader), 1)
         scheduler.step(avg_train_loss)
@@ -59,6 +73,18 @@ def train_phase2(config):
             
             epoch_time = time.time() - t0
             print(f"Epoch {epoch}/{config.p2_epochs} | Train Loss: {total_train_loss/len(train_loader):.6f} | Val Loss: {total_val_loss/max(1, len(val_loader)):.6f} | time: {epoch_time:.2f}s")
+            
+            if config.use_wandb:
+                wandb.log({
+                    "epoch": epoch,
+                    "train/loss": total_train_loss/max(len(train_loader), 1),
+                    "val/loss": total_val_loss/max(1, len(val_loader)),
+                    "train/epoch_time_s": epoch_time
+                })
 
     torch.save(model.state_dict(), config.phase2_model_path)
     print(f"Phase 2 complete. Model saved to {config.phase2_model_path}")
+    
+    if config.use_wandb:
+        wandb.save(config.phase2_model_path)
+        wandb.finish()

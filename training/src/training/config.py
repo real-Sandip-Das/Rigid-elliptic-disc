@@ -54,5 +54,10 @@ class WaveConfig:
     p2_epochs: int = 2000
     p2_lr: float = 1e-3
 
+    # Weights & Biases (W&B) Integration
+    use_wandb: bool = False
+    wandb_project: str = "rigid-elliptic-disc"
+    wandb_name: str = "" # If empty, wandb auto-generates a name
+
     def __post_init__(self):
         os.makedirs(self.checkpoint_dir, exist_ok=True)

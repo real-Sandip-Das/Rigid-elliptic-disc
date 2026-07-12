@@ -10,4 +10,7 @@ if __name__ == "__main__":
     cfg.p2_lr = 1e-1
     cfg.log_every = 10
     
+    cfg.use_wandb = True
+    cfg.wandb_name = "phase2-run1"
+    
     train_phase2(cfg)

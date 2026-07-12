@@ -1,6 +1,8 @@
 import math
 import time
 import os
+import dataclasses
+import wandb
 
 import numpy as np
 import torch
@@ -30,6 +32,13 @@ def train_phase1(config):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print(f"Phase 1 on {device}  |  data values + derivatives")
 
+    if config.use_wandb:
+        wandb.init(
+            project=config.wandb_project,
+            config=dataclasses.asdict(config),
+            name=config.wandb_name if config.wandb_name else "phase1"
+        )
+
     lbfgs_maxiter = getattr(config, 'lbfgs_max_iter', 20)
     lbfgs_maxeval = getattr(config, 'lbfgs_max_eval', 25)
     log_every     = getattr(config, 'log_every', 1)
@@ -42,6 +51,7 @@ def train_phase1(config):
         fourier_scale=config.fourier_scale
     ).to(device)
     model.freeze_for_phase1()
+
 
     optimizer = torch.optim.Adam(
         filter(lambda p: p.requires_grad, model.parameters()),
@@ -149,9 +159,13 @@ def train_phase1(config):
                     return _loss
 
                 loss_val = optimizer.step(closure)
-                total_loss += loss_val.item() if loss_val is not None else 0.0
-                total_loss_v += getattr(closure, 'last_loss_v', 0.0)
-                total_grad_norm += getattr(closure, 'last_grad_norm', 0.0)
+                step_loss = loss_val.item() if loss_val is not None else 0.0
+                step_loss_v = getattr(closure, 'last_loss_v', 0.0)
+                step_grad_norm = getattr(closure, 'last_grad_norm', 0.0)
+                
+                total_loss += step_loss
+                total_loss_v += step_loss_v
+                total_grad_norm += step_grad_norm
 
             else:
                 optimizer.zero_grad()
@@ -204,11 +218,23 @@ def train_phase1(config):
                 batch_grad_norm = float((b_norm**2 + t_norm**2)**0.5)
                 optimizer.step()
 
-                total_loss += loss.item()
-                total_loss_v += loss_v.item()
-                total_grad_norm += batch_grad_norm
+                step_loss = loss.item()
+                step_loss_v = loss_v.item()
+                step_grad_norm = batch_grad_norm
+
+                total_loss += step_loss
+                total_loss_v += step_loss_v
+                total_grad_norm += step_grad_norm
 
             n_batches += 1
+            
+            if config.use_wandb:
+                wandb.log({
+                    "batch/loss": step_loss,
+                    "batch/rel_err": step_loss_v,
+                    "batch/grad_norm": step_grad_norm,
+                    "batch/lambda_der": float(lambda_der)
+                })
 
         avg = total_loss / max(n_batches, 1)
         avg_v = total_loss_v / max(n_batches, 1)
@@ -227,6 +253,16 @@ def train_phase1(config):
                 f"grad norm: {avg_grad_norm:.4f} | "
                 f"time: {epoch_time:.2f}s"
             )
+
+            if config.use_wandb:
+                wandb.log({
+                    "epoch": epoch,
+                    "train/loss": avg,
+                    "train/rel_err": avg_v,
+                    "train/grad_norm": avg_grad_norm,
+                    "train/lambda_der": float(lambda_der),
+                    "train/epoch_time_s": epoch_time
+                })
 
         if epoch % max(1, log_every * 10) == 0:
             model.eval()
@@ -277,6 +313,14 @@ def train_phase1(config):
             avg_val_loss = val_loss / max(1, len(val_loader))
             avg_val_loss_v = val_loss_v / max(1, len(val_loader))
             print(f"Epoch {epoch:5d}/{config.p1_epochs} | Validation loss: {avg_val_loss:.6f} | Relative Value Error: {avg_val_loss_v:.6f}")
+            
+            if config.use_wandb:
+                wandb.log({
+                    "epoch": epoch,
+                    "val/loss": avg_val_loss,
+                    "val/rel_err": avg_val_loss_v
+                })
+                
             model.train()
 
         if using_lbfgs and avg_grad_norm < 1e-7:
@@ -285,3 +329,7 @@ def train_phase1(config):
 
     torch.save(model.state_dict(), config.phase1_model_path)
     print(f"Phase 1 complete. Model saved → {config.phase1_model_path}")
+    
+    if config.use_wandb:
+        wandb.save(config.phase1_model_path)
+        wandb.finish()
