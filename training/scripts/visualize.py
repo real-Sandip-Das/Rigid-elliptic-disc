@@ -10,7 +10,9 @@ dataset_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../dat
 sys.path.append(dataset_dir)
 
 from dataset_generation import problemcodeAMDC_opt as opt
-from dataset_generation.generate_dataset import evaluate_phi, generate_symmetric_points
+from dataset_generation.generate_dataset import generate_symmetric_points
+import jax
+import jax.numpy as jnp
 
 from training.config import WaveConfig
 from training.model import DeepONetWaveSurrogate
@@ -45,9 +47,10 @@ def main():
     actual_DC = []
     
     # Calculate actuals using closed form
+    pre = opt._precompute_A_data_jax(5)
     for K in K_vals:
-        # Signature: problemcodeAMDC(N, d_val, K, a, b)
-        final, _ = opt.problemcodeAMDC(5, d, K, a, b)
+        # Signature: problemcodeAMDC_jax(a, d_val, K, N, b, pre)
+        final, _ = opt.problemcodeAMDC_jax(a, d, K, 5, b, pre)
         added_mass = np.real(np.pi * final * a_b)
         damping = np.imag(np.pi * final * a_b)
         actual_AM.append(added_mass)
@@ -95,14 +98,17 @@ def main():
     # ---------------------------------------------------------
     print("Generating 3D Phi Plots for K = 0.25...")
     K_3d = 0.25
-    final_3d, X_sol_3d = opt.problemcodeAMDC(5, d, K_3d, a, b)
+    pre_3d = opt._precompute_A_data_jax(5)
+    final_3d, X_sol_3d = opt.problemcodeAMDC_jax(a, d, K_3d, 5, b, pre_3d)
     
     # Get the 25 actual anchor points
     s_pts, alpha_pts = generate_symmetric_points(N_s=3, N_alpha=8)
     
-    # evaluate_phi expects an extra batch dimension, so we add one.
-    X_sol_3d_batch = np.expand_dims(X_sol_3d, axis=0)
-    phi_actual = evaluate_phi(X_sol_3d_batch, 5, s_pts, alpha_pts)[0]
+    # Use JAX evaluation
+    s_j = jnp.array(s_pts)
+    alpha_j = jnp.array(alpha_pts)
+    phi_v = jax.vmap(lambda s, al: opt.phi_series(s, al, X_sol_3d, 5))(s_j, alpha_j)
+    phi_actual = np.array(phi_v)
     
     # Convert points to cartesian
     x_actual = a * s_pts * np.cos(alpha_pts)
@@ -162,6 +168,90 @@ def main():
     plt.savefig(imag_3d_path, dpi=300)
     plt.close()
     print(f"Saved Phi Imag 3D plot to {imag_3d_path}")
+    # ---------------------------------------------------------
+    # PART 3: Contour plots of AM and DC
+    # ---------------------------------------------------------
+    print("Generating AM and DC Contour Plots...")
+    
+    a_b_vals = np.linspace(1.0, 2.0, 50)
+    d_b_vals = np.linspace(0.1, 0.4, 50)
+    A_B, D_B = np.meshgrid(a_b_vals, d_b_vals)
+    
+    K_plot_vals = np.linspace(0.1, 2.0, 20)
+    
+    # 1. Run the model once to get all values
+    wp_list = []
+    for K_val in K_plot_vals:
+        for a, d in zip(A_B.flatten(), D_B.flatten()):
+            wp_list.append([a, d, K_val])
+            
+    wp_contour = torch.tensor(wp_list, dtype=torch.float32).to(device)
+    
+    with torch.no_grad():
+        pred_coeffs_contour = model.predict_coeffs(wp_contour).cpu().numpy()
+        
+    # Reshape predictions back into separate grids for each K value
+    pred_AM_all = pred_coeffs_contour[:, 0].reshape((20, A_B.shape[0], A_B.shape[1]))
+    pred_DC_all = pred_coeffs_contour[:, 1].reshape((20, A_B.shape[0], A_B.shape[1]))
+    
+    global_am_min, global_am_max = np.min(pred_AM_all), np.max(pred_AM_all)
+    global_dc_min, global_dc_max = np.min(pred_DC_all), np.max(pred_DC_all)
+    
+    levels_am_global = np.linspace(global_am_min, global_am_max, 30)
+    levels_dc_global = np.linspace(global_dc_min, global_dc_max, 30)
+    
+    # Helper function to create the figure
+    def create_contour_figure(consistent_scale=True):
+        fig, axes = plt.subplots(20, 2, figsize=(14, 4 * 20))
+        for idx, K_val in enumerate(K_plot_vals):
+            pred_AM = pred_AM_all[idx]
+            pred_DC = pred_DC_all[idx]
+            
+            if consistent_scale:
+                levels_am = levels_am_global
+                levels_dc = levels_dc_global
+                vmin_am, vmax_am = global_am_min, global_am_max
+                vmin_dc, vmax_dc = global_dc_min, global_dc_max
+            else:
+                levels_am = np.linspace(np.min(pred_AM), np.max(pred_AM), 30)
+                levels_dc = np.linspace(np.min(pred_DC), np.max(pred_DC), 30)
+                vmin_am, vmax_am = np.min(pred_AM), np.max(pred_AM)
+                vmin_dc, vmax_dc = np.min(pred_DC), np.max(pred_DC)
+            
+            # AM (Left)
+            ax_am = axes[idx, 0]
+            c_am = ax_am.contourf(A_B, D_B, pred_AM, levels=levels_am, cmap='viridis', vmin=vmin_am, vmax=vmax_am)
+            fig.colorbar(c_am, ax=ax_am)
+            ax_am.set_title(f'Added Mass (K={K_val:.2f})')
+            ax_am.set_xlabel('a/b')
+            ax_am.set_ylabel('d/b')
+            
+            # DC (Right)
+            ax_dc = axes[idx, 1]
+            c_dc = ax_dc.contourf(A_B, D_B, pred_DC, levels=levels_dc, cmap='plasma', vmin=vmin_dc, vmax=vmax_dc)
+            fig.colorbar(c_dc, ax=ax_dc)
+            ax_dc.set_title(f'Damping Coefficient (K={K_val:.2f})')
+            ax_dc.set_xlabel('a/b')
+            ax_dc.set_ylabel('d/b')
+            
+        fig.tight_layout()
+        return fig
+
+    # 2. Generate and save consistent scale figure
+    print("Saving consistent scale contour plot...")
+    fig_consistent = create_contour_figure(consistent_scale=True)
+    path_consistent = os.path.join(os.path.dirname(__file__), '../am_dc_contour_consistent.png')
+    fig_consistent.savefig(path_consistent, dpi=200)
+    plt.close(fig_consistent)
+    
+    # 3. Generate and save independent scale figure
+    print("Saving independent scale contour plot...")
+    fig_independent = create_contour_figure(consistent_scale=False)
+    path_independent = os.path.join(os.path.dirname(__file__), '../am_dc_contour_independent.png')
+    fig_independent.savefig(path_independent, dpi=200)
+    plt.close(fig_independent)
+    
+    print("Saved both contour plots.")
 
 if __name__ == '__main__':
     main()

@@ -68,7 +68,7 @@ def train_phase1(config):
     )
     
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
-        optimizer, mode='min', factor=0.1, patience=100, min_lr=1e-5
+        optimizer, mode='min', factor=0.1, patience=300, min_lr=1e-5
     )
 
     mse_loss = nn.MSELoss()

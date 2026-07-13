@@ -6,7 +6,7 @@ if __name__ == "__main__":
     
     cfg.data_path = "data/full_pinn_dataset.csv"
     cfg.p2_batch_size = 1024
-    cfg.p2_epochs = 10000
+    cfg.p2_epochs = 4000
     cfg.p2_lr = 1e-1
     cfg.log_every = 10
     

@@ -292,14 +292,20 @@ def phi_series(s, alpha, X_flat, N):
             q += 1
     return result
 
-def _eval_one_config(X_j, sa_j, N, a_j, b_j):
+def _eval_phi_and_derivs(X_sol, dX_da, dX_dd, sa_j, N, a, b):
+    """
+    Evaluate phi and its parametric derivatives at the sample points.
+    phi is linear in X, so d(phi)/da = phi_series(..., dX_da) etc.
+    """
     s_j     = sa_j[:, 0]
     alpha_j = sa_j[:, 1]
 
-    phi_v = jax.vmap(lambda s, a: phi_series(s, a, X_j, N))(s_j, alpha_j)
+    phi_v   = jax.vmap(lambda s, al: phi_series(s, al, X_sol, N))(s_j, alpha_j)
+    dphi_da = jax.vmap(lambda s, al: phi_series(s, al, dX_da,  N))(s_j, alpha_j)
+    dphi_dd = jax.vmap(lambda s, al: phi_series(s, al, dX_dd,  N))(s_j, alpha_j)
 
-    def phi_r(s, alpha): return jnp.real(phi_series(s, alpha, X_j, N))
-    def phi_i(s, alpha): return jnp.imag(phi_series(s, alpha, X_j, N))
+    def phi_r(s, al): return jnp.real(phi_series(s, al, X_sol, N))
+    def phi_i(s, al): return jnp.imag(phi_series(s, al, X_sol, N))
 
     gr = jax.vmap(jax.grad(phi_r, argnums=(0, 1)))(s_j, alpha_j)
     gi = jax.vmap(jax.grad(phi_i, argnums=(0, 1)))(s_j, alpha_j)
@@ -311,37 +317,96 @@ def _eval_one_config(X_j, sa_j, N, a_j, b_j):
     cos_a  = jnp.cos(alpha_j)
     sin_a  = jnp.sin(alpha_j)
 
-    dphi_dx = (cos_a / a_j) * dphi_ds - (sin_a / (a_j * s_safe)) * dphi_dalpha
-    dphi_dy = (sin_a / b_j) * dphi_ds + (cos_a / (b_j * s_safe)) * dphi_dalpha
+    dphi_dx = (cos_a / a) * dphi_ds - (sin_a / (a * s_safe)) * dphi_dalpha
+    dphi_dy = (sin_a / b) * dphi_ds + (cos_a / (b * s_safe)) * dphi_dalpha
 
-    return phi_v, dphi_dx, dphi_dy
+    return phi_v, dphi_da, dphi_dd, dphi_dx, dphi_dy
 
-def evaluate_all_base(a, d_val, K, N, b, sa_j, pre):
-    """Pure function for a single (a, d, K) — used as the AD target."""
-    final, X_sol = problemcodeAMDC_jax(a, d_val, K, N, b, pre)
-    AM = jnp.real(jnp.pi * final * a)
-    DC = jnp.imag(jnp.pi * final * a)
-    phi_v, dphi_dx, dphi_dy = _eval_one_config(X_sol, sa_j, N, a, b)
-    return AM, DC, phi_v, dphi_dx, dphi_dy
 
+# ──────────────────────────────────────────────────────────────────────
+# IFT: solve once, then get dX/da and dX/dd via cheap triangular solves
+# ──────────────────────────────────────────────────────────────────────
+
+_FD_H = 1e-5   # relative step for central-difference on the matrix
+
+def _compute_X_and_derivs(a, d_val, K, N, b, pre):
+    """
+    Solve the BIE system and compute dX/da, dX/dd via the Implicit Function Theorem.
+
+    C(a,d) X = f  =>  dX/dp = -C^{-1} (dC/dp X)   for p in {a, d}
+
+    dC/dp is estimated by central-difference on just the matrix assembly —
+    two cheap matrix builds per parameter, then two triangular solves
+    reusing the LU already computed for the forward pass.
+    """
+    h_a = jnp.maximum(jnp.abs(a),     1.0) * _FD_H
+    h_d = jnp.maximum(jnp.abs(d_val), 1.0) * _FD_H
+
+    # ── Forward solve ────────────────────────────────────────────────
+    A0, c0 = assemble_A_c_jax(a, d_val, K, N, b, pre)
+    C0   = A0 + c0
+    size = (N + 1) ** 2
+    f    = 4 * jnp.pi * jnp.ones(size, dtype=jnp.complex128)
+    lu, piv = jax.scipy.linalg.lu_factor(C0)        # factorise once
+    X_sol   = jax.scipy.linalg.lu_solve((lu, piv), f)
+
+    # ── dC/da by central difference ──────────────────────────────────
+    Ap, cp = assemble_A_c_jax(a + h_a, d_val, K, N, b, pre)
+    Am, cm = assemble_A_c_jax(a - h_a, d_val, K, N, b, pre)
+    dC_da  = ((Ap + cp) - (Am + cm)) / (2.0 * h_a)
+
+    # ── dC/dd — only c depends on d ──────────────────────────────────
+    _, cp_d = assemble_A_c_jax(a, d_val + h_d, K, N, b, pre)
+    _, cm_d = assemble_A_c_jax(a, d_val - h_d, K, N, b, pre)
+    dC_dd   = (cp_d - cm_d) / (2.0 * h_d)
+
+    # ── Derivative solves (triangular — very cheap) ──────────────────
+    dX_da = jax.scipy.linalg.lu_solve((lu, piv), -(dC_da @ X_sol))
+    dX_dd = jax.scipy.linalg.lu_solve((lu, piv), -(dC_dd @ X_sol))
+
+    # ── Scalar outputs ───────────────────────────────────────────────
+    W = jnp.outer(_DIC_W1_JAX, _DIC_W2_JAX)
+
+    def _final_from_X(X):
+        s = (pre['OP_rows'].T @ X).reshape((_QUAD_N, _QUAD_N))
+        return -jnp.sum(W * s) / jnp.pi
+
+    final      = _final_from_X(X_sol)
+    dfinal_da  = _final_from_X(dX_da)
+    dfinal_dd  = _final_from_X(dX_dd)
+
+    AM     = jnp.real(jnp.pi * final * a)
+    DC     = jnp.imag(jnp.pi * final * a)
+    dAM_da = jnp.real(jnp.pi * (dfinal_da * a + final))   # chain rule on *a
+    dDC_da = jnp.imag(jnp.pi * (dfinal_da * a + final))
+    dAM_dd = jnp.real(jnp.pi * dfinal_dd * a)
+    dDC_dd = jnp.imag(jnp.pi * dfinal_dd * a)
+
+    return X_sol, dX_da, dX_dd, AM, DC, dAM_da, dDC_da, dAM_dd, dDC_dd
+
+
+
+# ──────────────────────────────────────────────────────────────────────
 @functools.lru_cache(maxsize=None)
 def _get_jitted_evaluator(N, b, n_pts):
-    """
-    Returns a JIT-compiled function that takes (a, d, K, sa_j, pre)
-    and returns (out, jac_a, jac_d).
-    Cached per (N, b, n_pts) so JIT compilation happens exactly once.
-    """
     def _single_eval(a, d_val, K, sa_j, pre):
-        def base(a_, d_):
-            return evaluate_all_base(a_, d_, K, N, b, sa_j, pre)
-        out = base(a, d_val)
-        jac = jax.jacfwd(base, argnums=(0, 1))(a, d_val)
-        jac_a = tuple(j[0] for j in jac)
-        jac_d = tuple(j[1] for j in jac)
+        (X_sol, dX_da, dX_dd,
+         AM, DC, dAM_da, dDC_da, dAM_dd, dDC_dd) = _compute_X_and_derivs(a, d_val, K, N, b, pre)
+
+        phi_v, dphi_da, dphi_dd, dphi_dx, dphi_dy = _eval_phi_and_derivs(
+            X_sol, dX_da, dX_dd, sa_j, N, a, b)
+
+        out   = (AM, DC, phi_v, dphi_dx, dphi_dy)
+        jac_a = (dAM_da, dDC_da, dphi_da, jnp.zeros_like(dphi_dx), jnp.zeros_like(dphi_dy))
+        jac_d = (dAM_dd, dDC_dd, dphi_dd, jnp.zeros_like(dphi_dx), jnp.zeros_like(dphi_dy))
         return out, jac_a, jac_d
 
     return jax.jit(_single_eval)
 
+
+# ──────────────────────────────────────────────────────────────────────
+# Batch generation — parallel over CPU cores
+# ──────────────────────────────────────────────────────────────────────
 def generate_batch_data_jax(a_vals, d_vals, K_vals, N, b, s_pts, alpha_pts):
     """
     Evaluates AM, DC, phi + all analytical a/d derivatives over the full grid.
@@ -383,7 +448,7 @@ def generate_batch_data_jax(a_vals, d_vals, K_vals, N, b, s_pts, alpha_pts):
 
     def _drain(result):
         out, jac_a, jac_d = result
-        for j, v in enumerate(out):        out_lists[j].append(np.asarray(v))
+        for j, v in enumerate(out):       out_lists[j].append(np.asarray(v))
         for j, v in enumerate(jac_a):  jac_a_lists[j].append(np.asarray(v))
         for j, v in enumerate(jac_d):  jac_d_lists[j].append(np.asarray(v))
 
