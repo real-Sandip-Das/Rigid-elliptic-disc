@@ -3,6 +3,7 @@ import os
 import torch
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.backends.backend_pdf import PdfPages
 from mpl_toolkits.mplot3d import Axes3D
 
 # Add dataset_generation to path so we can import the exact physical solver
@@ -201,55 +202,61 @@ def main():
     levels_dc_global = np.linspace(global_dc_min, global_dc_max, 30)
     
     # Helper function to create the figure
-    def create_contour_figure(consistent_scale=True):
-        fig, axes = plt.subplots(20, 2, figsize=(14, 4 * 20))
-        for idx, K_val in enumerate(K_plot_vals):
-            pred_AM = pred_AM_all[idx]
-            pred_DC = pred_DC_all[idx]
-            
-            if consistent_scale:
-                levels_am = levels_am_global
-                levels_dc = levels_dc_global
-                vmin_am, vmax_am = global_am_min, global_am_max
-                vmin_dc, vmax_dc = global_dc_min, global_dc_max
-            else:
-                levels_am = np.linspace(np.min(pred_AM), np.max(pred_AM), 30)
-                levels_dc = np.linspace(np.min(pred_DC), np.max(pred_DC), 30)
-                vmin_am, vmax_am = np.min(pred_AM), np.max(pred_AM)
-                vmin_dc, vmax_dc = np.min(pred_DC), np.max(pred_DC)
-            
-            # AM (Left)
-            ax_am = axes[idx, 0]
-            c_am = ax_am.contourf(A_B, D_B, pred_AM, levels=levels_am, cmap='viridis', vmin=vmin_am, vmax=vmax_am)
-            fig.colorbar(c_am, ax=ax_am)
-            ax_am.set_title(f'Added Mass (K={K_val:.2f})')
-            ax_am.set_xlabel('a/b')
-            ax_am.set_ylabel('d/b')
-            
-            # DC (Right)
-            ax_dc = axes[idx, 1]
-            c_dc = ax_dc.contourf(A_B, D_B, pred_DC, levels=levels_dc, cmap='plasma', vmin=vmin_dc, vmax=vmax_dc)
-            fig.colorbar(c_dc, ax=ax_dc)
-            ax_dc.set_title(f'Damping Coefficient (K={K_val:.2f})')
-            ax_dc.set_xlabel('a/b')
-            ax_dc.set_ylabel('d/b')
-            
-        fig.tight_layout()
-        return fig
+    def generate_contour_pdf(consistent_scale=True, filename='output.pdf'):
+        with PdfPages(filename) as pdf:
+            # We want 2 K values per page. 20 K values = 10 pages.
+            for page_idx in range(10):
+                fig, axes = plt.subplots(2, 2, figsize=(14, 10))
+                
+                for i in range(2):
+                    idx = page_idx * 2 + i
+                    if idx >= len(K_plot_vals):
+                        break
+                        
+                    K_val = K_plot_vals[idx]
+                    pred_AM = pred_AM_all[idx]
+                    pred_DC = pred_DC_all[idx]
+                    
+                    if consistent_scale:
+                        levels_am = levels_am_global
+                        levels_dc = levels_dc_global
+                        vmin_am, vmax_am = global_am_min, global_am_max
+                        vmin_dc, vmax_dc = global_dc_min, global_dc_max
+                    else:
+                        levels_am = np.linspace(np.min(pred_AM), np.max(pred_AM), 30)
+                        levels_dc = np.linspace(np.min(pred_DC), np.max(pred_DC), 30)
+                        vmin_am, vmax_am = np.min(pred_AM), np.max(pred_AM)
+                        vmin_dc, vmax_dc = np.min(pred_DC), np.max(pred_DC)
+                    
+                    # AM (Left)
+                    ax_am = axes[i, 0]
+                    c_am = ax_am.contourf(A_B, D_B, pred_AM, levels=levels_am, cmap='viridis', vmin=vmin_am, vmax=vmax_am)
+                    fig.colorbar(c_am, ax=ax_am)
+                    ax_am.set_title(f'Added Mass (K={K_val:.2f})')
+                    ax_am.set_xlabel('a/b')
+                    ax_am.set_ylabel('d/b')
+                    
+                    # DC (Right)
+                    ax_dc = axes[i, 1]
+                    c_dc = ax_dc.contourf(A_B, D_B, pred_DC, levels=levels_dc, cmap='plasma', vmin=vmin_dc, vmax=vmax_dc)
+                    fig.colorbar(c_dc, ax=ax_dc)
+                    ax_dc.set_title(f'Damping Coefficient (K={K_val:.2f})')
+                    ax_dc.set_xlabel('a/b')
+                    ax_dc.set_ylabel('d/b')
+                    
+                fig.tight_layout()
+                pdf.savefig(fig)
+                plt.close(fig)
 
     # 2. Generate and save consistent scale figure
-    print("Saving consistent scale contour plot...")
-    fig_consistent = create_contour_figure(consistent_scale=True)
-    path_consistent = os.path.join(os.path.dirname(__file__), '../am_dc_contour_consistent.png')
-    fig_consistent.savefig(path_consistent, dpi=200)
-    plt.close(fig_consistent)
+    print("Saving consistent scale contour plot PDF...")
+    path_consistent = os.path.join(os.path.dirname(__file__), '../am_dc_contour_consistent.pdf')
+    generate_contour_pdf(consistent_scale=True, filename=path_consistent)
     
     # 3. Generate and save independent scale figure
-    print("Saving independent scale contour plot...")
-    fig_independent = create_contour_figure(consistent_scale=False)
-    path_independent = os.path.join(os.path.dirname(__file__), '../am_dc_contour_independent.png')
-    fig_independent.savefig(path_independent, dpi=200)
-    plt.close(fig_independent)
+    print("Saving independent scale contour plot PDF...")
+    path_independent = os.path.join(os.path.dirname(__file__), '../am_dc_contour_independent.pdf')
+    generate_contour_pdf(consistent_scale=False, filename=path_independent)
     
     print("Saved both contour plots.")
 
