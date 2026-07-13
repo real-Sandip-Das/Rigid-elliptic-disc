@@ -65,7 +65,6 @@ def generate_dataset(a0, a1, n_a, d0, d1, n_d, k0_val, k1_val, n_k,
             for i_K, K in enumerate(K_vals):
                 row = [a_b, d_b, K]
                 
-                # Phi + derivatives for each point
                 for i_p in range(num_points):
                     row.extend([
                         float(phi_base[i_a, i_d, i_K, i_p].real),
