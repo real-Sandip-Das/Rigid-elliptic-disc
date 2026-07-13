@@ -2,6 +2,11 @@
 __pycache__
 .venv
 data
-.agents
-checkpoints
 wandb
+.agents
+
+checkpoints/
+
+!training/checkpoints/
+training/checkpoints/*
+!training/checkpoints/phase2_final.pth
